@@ -8,7 +8,7 @@ import json
 
 
 GITHUB_BUILD_SCRIPT_BASE_REPO = "build-scripts"
-GITHUB_BUILD_SCRIPT_BASE_OWNER = "ppc64le"
+GITHUB_BUILD_SCRIPT_BASE_OWNER = "i-wheels-cpd"
 HOME = os.getcwd()
 
 package_data = {}
