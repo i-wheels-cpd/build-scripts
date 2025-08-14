@@ -1,0 +1,308 @@
+name: Currency Build
+
+on:
+  workflow_dispatch:
+    branches:
+      - master
+      - replica-master
+    inputs:
+      package_name:
+        description: 'Name of the package to build'
+        required: true
+      version:
+        description: 'Version of the package'
+        required: true
+      validate_build_script:
+        description: 'Run build validation script'
+        required: true
+        default: 'false'
+      wheel_build:
+        description: 'Create wheel for different Python versions'
+        required: true
+        default: 'false'
+      build_docker:
+        description: 'Build docker image'
+        required: true
+        default: 'false'
+      enable_trivy:
+        description: 'Enable Trivy scan'
+        required: true
+        default: 'true'
+      enable_syft:
+        description: 'Enable Syft scan'
+        required: true
+        default: 'true'
+      enable_grype:
+        description: 'Enable Grype scan'
+        required: true
+        default: 'true'
+      unique_id:
+        description: 'Unique ID for the build'
+        required: false
+        default: 'None'
+
+run-name: Currency Build ${{ inputs.package_name }} && Unique ID ${{ inputs.unique_id }}
+
+jobs:
+  build_info:
+    runs-on: ubuntu-24.04
+    env:
+      PACKAGE_NAME: ${{ inputs.package_name }}
+      VERSION: ${{ inputs.version }}
+      VALIDATE_BUILD_SCRIPT: ${{ inputs.validate_build_script }}
+      WHEEL_BUILD: ${{ inputs.wheel_build }}
+      build_docker: ${{ inputs.build_docker }}
+      ENABLE_TRIVY: ${{ inputs.enable_trivy }}
+      ENABLE_SYFT: ${{ inputs.enable_syft }}
+      ENABLE_GRYPE: ${{ inputs.enable_grype }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system packages
+        run: |
+          sudo apt update -y
+          sudo apt install -y jq file
+          
+      - name: Install Python dependencies
+        run: |
+          pip3 install --force-reinstall -v "requests==2.31.0"
+          pip3 install --upgrade docker
+
+      - name: Get Build Info and Save Variables
+        run: |
+          chmod +x ./gha-script/read_buildinfo.sh
+          bash ./gha-script/read_buildinfo.sh
+
+      - name: Show contents of variable.sh
+        run: |
+          echo "===== variable.sh ====="
+          cat variable.sh
+          echo "======================="
+
+      - name: Create scanner-env.sh
+        run: |
+          echo "Creating package-cache........."
+          mkdir package-cache
+          echo "Creating scanner-env.sh ......."
+          echo "export VALIDATE_BUILD_SCRIPT='${{ inputs.validate_build_script }}'" > scanner-env.sh
+          echo "export BUILD_DOCKER='${{ inputs.build_docker }}'" >> scanner-env.sh
+          echo "export PACKAGE_NAME='${{ inputs.package_name }}'" >> scanner-env.sh         
+          echo "===== scanner-env.sh ====="
+          cat scanner-env.sh
+          echo "=========================="
+          echo "Moving scanner-env.sh and variable.sh into package-cache............"
+          sudo mv variable.sh package-cache
+          sudo mv scanner-env.sh package-cache
+          echo "Moved scanner-env.sh and variable.sh into package-cache............"
+          
+
+      - name: Upload variable.sh and scanner-env.sh via package-cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-cache
+          path: package-cache
+                
+
+  build:
+    needs: build_info
+    if: ${{ inputs.validate_build_script == 'true' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download package-cache
+        uses: actions/download-artifact@v4
+        with:
+          name: package-cache
+          path: package-cache
+
+     
+       
+      - name: Build Package
+        env:
+          travis_currency_service_id_api_key_dev: ${{ secrets.travis_currency_service_id_api_key_dev }}
+        run: |
+          export travis_currency_service_id_api_key_dev
+          echo "Sourcing variable.sh and scanner-env.sh..........................................."
+          source package-cache/variable.sh
+          source package-cache/scanner-env.sh
+          echo "===== variable.sh ====="
+          cat package-cache/variable.sh
+          echo "===== scanner-env.sh ====="
+          cat package-cache/scanner-env.sh
+          echo "==============LSCPU================"
+          lscpu
+          echo "==================================="
+          chmod +x ./gha-script/build_package.sh
+          bash ./gha-script/build_package.sh
+          cloned_package=$(ls -td -- */ | head -n 1)
+          sudo mv "$cloned_package" package-cache
+          echo "export CLONED_PACKAGE=\"$cloned_package\"" >> package-cache/scanner-env.sh
+          echo "-------------updated scanner-env.sh-----------------------"
+          cat  package-cache/scanner-env.sh
+          echo "---------------------------------------------"
+          cd package-cache
+          sudo chown $USER:$USER -R .
+          chmod +x ../gha-script/pre_process.sh
+          bash ../gha-script/pre_process.sh
+          cd $GITHUB_WORKSPACE
+          gzip build_log
+          #echo "------------------- starting upload --------------------------"
+          #chmod +x ./gha-script/upload-scripts/upload_file.sh
+          #echo "-------------------- started upload -------------------------"
+          #bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
+          #echo "------------------ Done with upload ---------------------------"
+
+
+
+      - name: Fix permissions on package-cache
+        run: |
+          USER=$(whoami)
+          echo "Current user: $USER"
+          echo "Fixing ownership and permissions for package-cache"
+          sudo chown -R $USER:$USER package-cache
+          sudo chmod -R u+rwX,go+rX,go-w package-cache
+         
+      - name: Upload updated package-cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: updated-package-cache
+          path: package-cache
+
+  wheel_build:
+    needs: build_info
+    name: Create Wheel for Python ${{ matrix.python-version }}
+    if: ${{ inputs.wheel_build == 'true' }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.9"
+            allow-failure: true
+          - python-version: "3.10"
+            allow-failure: false
+          - python-version: "3.11"
+            allow-failure: false
+          - python-version: "3.12"
+            allow-failure: false
+          - python-version: "3.13"
+            allow-failure: true
+    env:
+      travis_currency_service_id_api_key_dev: ${{ secrets.travis_currency_service_id_api_key_dev }}
+      PYTHON_VERSION: ${{ matrix.python-version }}
+      PACKAGE_NAME: ${{ inputs.package_name }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update -y
+          #sudo apt install -y jq file python${{ matrix.python-version }}-dev python${{ matrix.python-version }}-pip
+
+      - name: Download package-cache from previous step
+        uses: actions/download-artifact@v4
+        with:
+          name: package-cache
+          path: package-cache
+
+      - name: Run build_wheels.sh
+        run: |
+          ls
+          echo "---------------------updated cache-----------------------"
+          ls package-cache
+          chmod +x package-cache/variable.sh
+          chmod +x package-cache/scanner-env.sh
+          source package-cache/variable.sh
+          source package-cache/scanner-env.sh
+          
+          #python${{ matrix.python-version }} -m pip install --upgrade pip setuptools wheel
+
+          chmod +x ./gha-script/build_wheels.sh
+          bash ./gha-script/build_wheels.sh
+          sudo apt update -y
+          sudo lsb_release -a 2>/dev/null || echo "lsb_release not available"
+          sudo uname -a
+          
+        continue-on-error: ${{ matrix.allow-failure }}
+
+      - name: Upload wheel artifact using custom script
+        run: |
+          echo "--------------------- Staring if block ------------------------"
+          if [ -z "${{ secrets.travis_currency_service_id_api_key_dev }}" ]; then
+              echo "travis_currency_service_id_api_key_dev is empty or not set"
+          else
+              echo "--------------------- inside else block ------------------------"
+              # Print the length of the variable
+              echo "Length of travis_currency_service_id_api_key_dev is: ${#travis_currency_service_id_api_key_dev}"
+              export travis_currency_service_id_api_key_dev
+              WHEEL_FILE=*.whl
+              #chmod +x ./gha-script/upload-scripts/upload_wheel.sh
+              #bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
+          fi 
+        # continue-on-error: ${{ matrix.allow-failure }}
+
+      
+  source_scanner:
+    needs: build
+    if: ${{ inputs.validate_build_script == 'true' }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        scanner: [trivy, syft, grype]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download package-cache
+        uses: actions/download-artifact@v4
+        with:
+          name: updated-package-cache
+          path: package-cache
+
+      - name: Run ${{ matrix.scanner }} Scan
+        run: |
+          source package-cache/variable.sh
+          source package-cache/scanner-env.sh
+          echo "---------updated scanner-env.sh ----------------"
+          cat package-cache/scanner-env.sh
+          chmod +x ./gha-script/scanner-scripts/${{ matrix.scanner }}_code_scan.sh
+          bash ./gha-script/scanner-scripts/${{ matrix.scanner }}_code_scan.sh
+          
+          mkdir source_${{ matrix.scanner }}
+          mv package-cache/${{ matrix.scanner }}_source* source_${{ matrix.scanner }}
+
+      - name: Upload ${{ matrix.scanner }} Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-${{ matrix.scanner }}-results
+          path: source_${{ matrix.scanner }}
+
+#  upload_scanner_results:
+#    needs: source_scanner
+#    runs-on: ubuntu-24.04
+#    steps:
+#      - uses: actions/checkout@v4
+#  
+#      - name: Download all scan artifacts
+#        uses: actions/download-artifact@v4
+#        with:
+#          path: all-scanner-results
+#  
+#      - name: Upload Scanner Results to COS
+#        env:
+#          gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+#        run: |
+#          export gha_currency_service_id_api_key_dev
+#          mkdir -p source
+#
+#          find all-scanner-results -type f -exec cp {} source/ \;
+#
+#          tar cvzf source_scanner.tar.gz source
+#          chmod +x ./gha-script/upload-scripts/upload_file.sh
+#          bash ./gha-script/upload-scripts/upload_file.sh source_scanner.tar.gz
+
