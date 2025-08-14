@@ -3,8 +3,7 @@ name: Currency Build
 on:
   workflow_dispatch:
     branches:
-      - master
-      - replica-master
+      - main
     inputs:
       package_name:
         description: 'Name of the package to build'

@@ -3,8 +3,7 @@ name: PR build
 on:
   pull_request:
     branches:
-      - master
-      - replica-master
+      - main
 
 jobs:
   validate:
