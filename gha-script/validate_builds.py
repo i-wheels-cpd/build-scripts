@@ -157,12 +157,17 @@ def trigger_build_validation_travis(pr_number):
         pr_number
     )
     validated_file_list = []
-    response = requests.get(pull_request_file_url).json()
+
+    response = requests.get(pull_request_file_url)
 
     print(f"-------------------------------------STATUS CODE-----------------------------------------")
     print(f"GitHub API status: {response.status_code}")
     print(f"GitHub API response: {response.text}")
 
+    
+    response = requests.get(pull_request_file_url).json()
+
+    
 
     ordered_files = []
     build_info = [file for file in response if 'build_info.json' in file.get('filename')]
