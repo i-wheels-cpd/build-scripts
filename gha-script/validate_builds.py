@@ -158,17 +158,8 @@ def trigger_build_validation_travis(pr_number):
     )
     validated_file_list = []
 
-    api_response = requests.get(pull_request_file_url)
-
-    # Use the raw response object to access status and text
-    print(f"-------------------------------------STATUS CODE-----------------------------------------")
-    print(f"GitHub API status: {api_response.status_code}")
-    print(f"GitHub API response: {api_response.text}")
-
-    # Parse the response once you're done inspecting
-    response = api_response.json()
-    
-    #response = requests.get(pull_request_file_url).json()
+     
+    response = requests.get(pull_request_file_url).json()
 
     
 
