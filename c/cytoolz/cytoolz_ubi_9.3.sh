@@ -24,7 +24,7 @@ PACKAGE_VERSION=${1:-0.12.0}
 PACKAGE_URL=https://github.com/pytoolz/cytoolz.git
 
 # Install necessary system dependencies
-yum install -y git gcc gcc-c++ make cmake wget openssl-devel bzip2-devel libffi-devel zlib-devel 
+yum install -y git gcc gcc-c++ make cmake wget openssl-devel bzip2-devel libffi-devel zlib-devel python3-devel python3-pip
 
 # Clone the repository
 git clone $PACKAGE_URL
