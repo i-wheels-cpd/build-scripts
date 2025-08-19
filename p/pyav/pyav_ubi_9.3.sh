@@ -217,7 +217,6 @@ export PATH="/install-deps/ffmpeg/bin:$PATH"
 ffmpeg -version
 echo "-----------------------------------------------------Installed ffmpeg------------------------------------------------"
 
-
 #installing pillow
 cd $CURRENT_DIR
 git clone https://github.com/python-pillow/Pillow
