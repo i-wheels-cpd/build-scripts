@@ -259,11 +259,6 @@ if ! (python setup.py build_ext --inplace) ; then
     exit 1
 fi
 
-#During wheel creation for this package we need installed dependencies from source. Once script get exit, and if we build wheel through wrapper script, then those are not applicable during wheel creation. So we are generating wheel for this package in script itself.
-echo "---------------------------------------------------Building the wheel--------------------------------------------------"
-pip install --upgrade pip build setuptools wheel
-python -m build --wheel --no-isolation --outdir="$CURRENT_DIR/"
-
 echo "----------------------------------------------Testing pkg-------------------------------------------------------"
 #Test package
 #Skipping few tests as they are failing because of disabling some codecs related to audio and video in ffmpeg. We disabled those codecs because of license associated with them.
