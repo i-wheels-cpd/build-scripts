@@ -46,7 +46,7 @@ INSTALL_ROOT="/install-deps"
 mkdir -p $INSTALL_ROOT
 
 
-for package in lame opus libvpx ffmpeg pillow numpy; do
+for package in lame opus libvpx ffmpeg pillow; do
     mkdir -p ${INSTALL_ROOT}/${package}
     export "${package^^}_PREFIX=${INSTALL_ROOT}/${package}" # convert package name to upper code ${package^^}
     echo "Exported ${package^^}_PREFIX=${INSTALL_ROOT}/${package}"
