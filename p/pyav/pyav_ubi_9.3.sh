@@ -33,10 +33,8 @@ export PATH=/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
 export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-13/root/usr/lib64:$LD_LIBRARY_PATH
 gcc --version
 
-export GCC_HOME=/opt/rh/gcc-toolset-13/root/usr
-export CC=$GCC_HOME/bin/gcc
-export CXX=$GCC_HOME/bin/g++
-
+export C_COMPILER=$(which gcc)
+export CXX_COMPILER=$(which g++)
 
 OS_NAME=$(cat /etc/os-release | grep ^PRETTY_NAME | cut -d= -f2)
 
