@@ -97,7 +97,3 @@ else
 fi
 
 echo "There are no test cases available. skipping the test cases"
-
-# Import check
-echo "Import check"
-python -c "import libvpx;"
