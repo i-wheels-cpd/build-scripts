@@ -21,10 +21,23 @@ PACKAGE_NAME=libvpx
 PACKAGE_DIR=libvpx
 PACKAGE_VERSION=${1:-v1.13.1}
 PACKAGE_URL=https://github.com/webmproject/libvpx
+CURRENT_DIR=$(pwd)
 
 # install core dependencies
 yum install -y python python-pip python-devel git cmake gcc-toolset-13 wget
 export PATH=/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
+
+echo "-----------------------------------------------------build & install yasm------------------------------------------------"
+#install yasm
+cd $CURRENT_DIR
+curl -LO https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
+tar xzvf yasm-1.3.0.tar.gz
+cd yasm-1.3.0
+./configure
+make
+make install
+cd $CURRENT_DIR
+echo "-----------------------------------------------------Installed yasm------------------------------------------------"
 
 # clone source repository
 git clone $PACKAGE_URL
