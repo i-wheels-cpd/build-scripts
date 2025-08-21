@@ -76,7 +76,4 @@ else
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub  | Pass |  Both_Install_Success"
     exit 0
 fi
-
-# Import check
-echo "Import check"
-python -c "import opus;"
+echo "There are no test cases available. skipping the test cases"
