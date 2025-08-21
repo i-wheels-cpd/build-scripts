@@ -52,7 +52,7 @@ export CXX_COMPILER=$(which g++)
 
 #Build libprotobuf
 git clone $PACKAGE_URL
-cd $PACKAGE_DIR
+cd $PACKAGE_NAME
 git checkout $PACKAGE_VERSION
 
 SOURCE_DIR=$(pwd)
