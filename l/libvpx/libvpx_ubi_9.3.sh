@@ -16,6 +16,7 @@
 #             contact "Maintainer" of this script.
 #
 # ----------------------------------------------------------------------------
+set -ex
 
 PACKAGE_NAME=libvpx
 PACKAGE_DIR=libvpx
