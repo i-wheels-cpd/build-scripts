@@ -197,7 +197,7 @@ mkdir -p repackged_wheel
 
 # Pack the locally built TensorFlow files into a wheel
 wheel pack local/ -d repackged_wheel
-cp -a $SRC_DIR/repackged_wheel/*.whl $CURRENT_DIR
+cp -a $SRC_DIR/repackged_wheel/*.whl $WORK_DIR
 
 # Run tests for the pip_package directory
 if ! (bazel test  -k  //tensorflow/tools/pip_package/...); then
