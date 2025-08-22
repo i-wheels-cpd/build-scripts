@@ -5,7 +5,7 @@
 # Version       : 1.3.1
 # Source repo   : https://github.com/webmproject/libvpx
 # Tested on     : UBI:9.3
-# Language      : Python, C
+# Language      : Python
 # Travis-Check  : True
 # Script License: Apache License, Version 2 or later
 # Maintainer    : Aastha Sharma <aastha.sharma4@ibm.com>
@@ -80,7 +80,7 @@ cp -r prefix/* local/libvpx/
 
 pip install setuptools
 
-#dDownloading pyproject.toml file
+#Downloading pyproject.toml file
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/l/libvpx/pyproject.toml
 sed -i s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g pyproject.toml
 
@@ -89,11 +89,17 @@ if ! pip install . ; then
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_Fails"
     exit 1
-else
-    echo "------------------$PACKAGE_NAME:Install_success-------------------------"
-    echo "$PACKAGE_URL $PACKAGE_NAME"
-    echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub  | Pass |  Both_Install_Success"
-    exit 0
 fi
 
-echo "There are no test cases available. skipping the test cases"
+# Run test cases
+if !(./configure --enable-unit-tests); then
+    echo "------------------$PACKAGE_NAME:install_success_but_test_fails---------------------"
+    echo "$PACKAGE_URL $PACKAGE_NAME"
+    echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_success_but_test_Fails"
+    exit 2
+else
+    echo "------------------$PACKAGE_NAME:install_&_test_both_success-------------------------"
+    echo "$PACKAGE_URL $PACKAGE_NAME"
+    echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub  | Pass |  Both_Install_and_Test_Success"
+    exit 0
+fi
