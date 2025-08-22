@@ -53,9 +53,6 @@ fi
 ./autogen.sh
 ./configure --prefix=$PREFIX $HOST_BUILD && make -j$JOBS && make install
 
-#test
-make check
-
 mkdir -p local/opus
 cp -r ${PREFIX}/* local/opus/
 
@@ -70,10 +67,17 @@ if ! pip install . ; then
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_Fails"
     exit 1
-else
-    echo "------------------$PACKAGE_NAME:Install_success-------------------------"
+fi
+
+# Run test cases
+if !(make check); then
+    echo "------------------$PACKAGE_NAME:install_success_but_test_fails---------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
-    echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub  | Pass |  Both_Install_Success"
+    echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_success_but_test_Fails"
+    exit 2
+else
+    echo "------------------$PACKAGE_NAME:install_&_test_both_success-------------------------"
+    echo "$PACKAGE_URL $PACKAGE_NAME"
+    echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub  | Pass |  Both_Install_and_Test_Success"
     exit 0
 fi
-echo "There are no test cases available. skipping the test cases"
