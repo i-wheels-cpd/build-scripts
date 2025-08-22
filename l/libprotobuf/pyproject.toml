@@ -3,8 +3,7 @@
 [build-system]
 requires = [
     "setuptools",
-    "wheel",
-    "auditwheel>=5.0.0",
+    "wheel"
 ]
 
 #Set build backend to setuptools
