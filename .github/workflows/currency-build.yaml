@@ -120,9 +120,9 @@ jobs:
        
       - name: Build Package
         env:
-          travis_currency_service_id_api_key_dev: ${{ secrets.travis_currency_service_id_api_key_dev }}
+          gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
         run: |
-          export travis_currency_service_id_api_key_dev
+          export gha_currency_service_id_api_key_dev
           echo "Sourcing variable.sh and scanner-env.sh..........................................."
           source package-cache/variable.sh
           source package-cache/scanner-env.sh
@@ -189,7 +189,7 @@ jobs:
           - python-version: "3.13"
             allow-failure: true
     env:
-      travis_currency_service_id_api_key_dev: ${{ secrets.travis_currency_service_id_api_key_dev }}
+      gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       PACKAGE_NAME: ${{ inputs.package_name }}
       VERSION: ${{ inputs.version }}
@@ -231,13 +231,13 @@ jobs:
       - name: Upload wheel artifact using custom script
         run: |
           echo "--------------------- Staring if block ------------------------"
-          if [ -z "${{ secrets.travis_currency_service_id_api_key_dev }}" ]; then
-              echo "travis_currency_service_id_api_key_dev is empty or not set"
+          if [ -z "${{ secrets.gha_currency_service_id_api_key_dev }}" ]; then
+              echo "gha_currency_service_id_api_key_dev is empty or not set"
           else
               echo "--------------------- inside else block ------------------------"
               # Print the length of the variable
-              echo "Length of travis_currency_service_id_api_key_dev is: ${#travis_currency_service_id_api_key_dev}"
-              export travis_currency_service_id_api_key_dev
+              echo "Length of gha_currency_service_id_api_key_dev is: ${#gha_currency_service_id_api_key_dev}"
+              export gha_currency_service_id_api_key_dev
               WHEEL_FILE=*.whl
               chmod +x ./gha-script/upload-scripts/upload_wheel.sh
               bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
