@@ -164,10 +164,11 @@ if ! (MAX_JOBS=$(nproc) python3.12 setup.py install) ; then
     exit 1
 fi
 
-cd ..
+python3.12 -m pip install -r .ci/docker/requirements-ci.txt
+ln -s $(which python3.12) /usr/bin/python
 
 #Test
-if ! (python3.12 -c "import torch;") ; then
+if ! (python3.12 test/run_test.py) ; then
     echo "------------------$PACKAGE_NAME:install_success_but_test_fails---------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_success_but_test_Fails"
