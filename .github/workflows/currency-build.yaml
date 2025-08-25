@@ -120,7 +120,7 @@ jobs:
        
       - name: Build Package
         env:
-          gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+          gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
         run: |
           export gha_currency_service_id_api_key_dev
           echo "Sourcing variable.sh and scanner-env.sh..........................................."
@@ -189,7 +189,7 @@ jobs:
           - python-version: "3.13"
             allow-failure: true
     env:
-      gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+      gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       PACKAGE_NAME: ${{ inputs.package_name }}
       VERSION: ${{ inputs.version }}
@@ -231,12 +231,12 @@ jobs:
       - name: Upload wheel artifact using custom script
         run: |
           echo "--------------------- Staring if block ------------------------"
-          if [ -z "${{ secrets.gha_currency_service_id_api_key_dev }}" ]; then
+          if [ -z "${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}" ]; then
               echo "gha_currency_service_id_api_key_dev is empty or not set"
           else
               echo "--------------------- inside else block ------------------------"
               # Print the length of the variable
-              echo "Length of gha_currency_service_id_api_key_dev is: ${#gha_currency_service_id_api_key_dev}"
+              echo "Length of gha_currency_service_id_api_key_dev is: ${#GHA_CURRENCY_SERVICE_ID_API_KEY_DEV}"
               export gha_currency_service_id_api_key_dev
               WHEEL_FILE=*.whl
               chmod +x ./gha-script/upload-scripts/upload_wheel.sh
