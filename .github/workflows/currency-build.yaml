@@ -291,6 +291,12 @@ jobs:
          uses: actions/download-artifact@v4
          with:
            path: all-scanner-results
+
+       - name: Download package-cache
+         uses: actions/download-artifact@v4
+         with:
+           name: package-cache
+           path: package-cache
    
        - name: Upload Scanner Results to COS
          env:
@@ -298,7 +304,9 @@ jobs:
          run: |
            export gha_currency_service_id_api_key_dev
            mkdir -p source
-  
+
+           source package-cache/variable.sh
+           source package-cache/scanner-env.sh
            find all-scanner-results -type f -exec cp {} source/ \;
   
            tar cvzf source_scanner.tar.gz source
