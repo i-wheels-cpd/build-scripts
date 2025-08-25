@@ -236,7 +236,7 @@ jobs:
           else
               echo "--------------------- inside else block ------------------------"
               # Print the length of the variable
-              echo "Length of gha_currency_service_id_api_key_dev is: ${#GHA_CURRENCY_SERVICE_ID_API_KEY_DEV}"
+              echo "Length of gha_currency_service_id_api_key_dev is: ${#gha_currency_service_id_api_key_dev}"
               export gha_currency_service_id_api_key_dev
               WHEEL_FILE=*.whl
               chmod +x ./gha-script/upload-scripts/upload_wheel.sh
