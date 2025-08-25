@@ -147,11 +147,11 @@ jobs:
           bash ../gha-script/pre_process.sh
           cd $GITHUB_WORKSPACE
           gzip build_log
-          #echo "------------------- starting upload --------------------------"
-          #chmod +x ./gha-script/upload-scripts/upload_file.sh
-          #echo "-------------------- started upload -------------------------"
-          #bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
-          #echo "------------------ Done with upload ---------------------------"
+          echo "------------------- starting upload --------------------------"
+          chmod +x ./gha-script/upload-scripts/upload_file.sh
+          echo "-------------------- started upload -------------------------"
+          bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
+          echo "------------------ Done with upload ---------------------------"
 
 
 
@@ -239,8 +239,8 @@ jobs:
               echo "Length of travis_currency_service_id_api_key_dev is: ${#travis_currency_service_id_api_key_dev}"
               export travis_currency_service_id_api_key_dev
               WHEEL_FILE=*.whl
-              #chmod +x ./gha-script/upload-scripts/upload_wheel.sh
-              #bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
+              chmod +x ./gha-script/upload-scripts/upload_wheel.sh
+              bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
           fi 
         # continue-on-error: ${{ matrix.allow-failure }}
 
@@ -281,27 +281,27 @@ jobs:
           name: source-${{ matrix.scanner }}-results
           path: source_${{ matrix.scanner }}
 
-#  upload_scanner_results:
-#    needs: source_scanner
-#    runs-on: ubuntu-24.04
-#    steps:
-#      - uses: actions/checkout@v4
-#  
-#      - name: Download all scan artifacts
-#        uses: actions/download-artifact@v4
-#        with:
-#          path: all-scanner-results
-#  
-#      - name: Upload Scanner Results to COS
-#        env:
-#          gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
-#        run: |
-#          export gha_currency_service_id_api_key_dev
-#          mkdir -p source
-#
-#          find all-scanner-results -type f -exec cp {} source/ \;
-#
-#          tar cvzf source_scanner.tar.gz source
-#          chmod +x ./gha-script/upload-scripts/upload_file.sh
-#          bash ./gha-script/upload-scripts/upload_file.sh source_scanner.tar.gz
+  upload_scanner_results:
+     needs: source_scanner
+     runs-on: ubuntu-24.04
+     steps:
+       - uses: actions/checkout@v4
+   
+       - name: Download all scan artifacts
+         uses: actions/download-artifact@v4
+         with:
+           path: all-scanner-results
+   
+       - name: Upload Scanner Results to COS
+         env:
+           gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+         run: |
+           export gha_currency_service_id_api_key_dev
+           mkdir -p source
+  
+           find all-scanner-results -type f -exec cp {} source/ \;
+  
+           tar cvzf source_scanner.tar.gz source
+           chmod +x ./gha-script/upload-scripts/upload_file.sh
+           bash ./gha-script/upload-scripts/upload_file.sh source_scanner.tar.gz
 
