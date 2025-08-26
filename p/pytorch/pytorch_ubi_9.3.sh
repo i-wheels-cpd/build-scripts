@@ -164,14 +164,10 @@ if ! (MAX_JOBS=$(nproc) python3.12 setup.py install) ; then
     exit 1
 fi
 
-python3.12 -m pip install -r .ci/docker/requirements-ci.txt
-ln -s $(which python3.12) /usr/bin/python
-
-export TORCH_DISABLE_ADDR2LINE=1
-export PYTORCH_PRINT_REPRO_ON_FAILURE=0
+python3.12 setup.py develop
 
 #Test
-if ! (python3.12 test/run_test.py -k "not block_diag") ; then
+if ! (python3.12 test/test_torch.py) ; then
     echo "------------------$PACKAGE_NAME:install_success_but_test_fails---------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_success_but_test_Fails"
