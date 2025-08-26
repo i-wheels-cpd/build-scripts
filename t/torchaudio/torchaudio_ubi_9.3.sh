@@ -93,7 +93,7 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION_VERSION=2
 
 #Apply patch
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/p/protobuf/protobuf_v4.25.8.patch
-git apply set_cpp_to_17_v4.25.3.patch
+git apply protobuf_v4.25.8.patch
 
 echo "Installing protobuf...."
 cd python
