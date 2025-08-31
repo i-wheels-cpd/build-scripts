@@ -119,9 +119,6 @@ git apply pytorch_v2.6.0.patch
 
 ARCH=`uname -p`
 BUILD_NUM="1"
-export OPENBLAS_INCLUDE=/OpenBLAS/local/openblas/include/
-export LD_LIBRARY_PATH="$OpenBLASInstallPATH/lib"
-export OpenBLAS_HOME="/usr/include/openblas"
 export build_type="cpu"
 export CPU_COUNT=$(nproc --all)
 export CXXFLAGS="${CXXFLAGS} -D__STDC_FORMAT_MACROS"
@@ -154,8 +151,6 @@ export Protobuf_LIBRARIES=${LIBPROTO_INSTALL}/lib64
 export Protobuf_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf.so
 export Protobuf_LITE_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf-lite.so
 export Protobuf_PROTOC_EXECUTABLE=${LIBPROTO_INSTALL}/bin/protoc
-export LD_LIBRARY_PATH=/pytorch/torch/lib64/libprotobuf.so.3.13.0.0:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/pytorch/build/lib/libprotobuf.so.3.13.0.0:$LD_LIBRARY_PATH
 export PATH="/protobuf/local/libprotobuf/bin/protoc:${PATH}"
 export LD_LIBRARY_PATH="/protobuf/local/libprotobuf/lib64:${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH="/protobuf/third_party/abseil-cpp/local/abseilcpp/lib:${LD_LIBRARY_PATH}"
@@ -195,10 +190,7 @@ export Protobuf_LIBRARIES=${LIBPROTO_INSTALL}/lib64
 export Protobuf_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf.so
 export Protobuf_LITE_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf-lite.so
 export Protobuf_PROTOC_EXECUTABLE=${LIBPROTO_INSTALL}/bin/protoc
-export LD_LIBRARY_PATH=${SCRIPT_DIR}/pytorch/torch/lib64/libprotobuf.so.3.13.0.0:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${SCRIPT_DIR}/pytorch/build/lib/libprotobuf.so.3.13.0.0:$LD_LIBRARY_PATH
 export PATH="${SCRIPT_DIR}/protobuf/local/libprotobuf/bin/protoc:${PATH}"
-export LD_LIBRARY_PATH="${SCRIPT_DIR}/OpenBLAS:/protobuf/local/libprotobuf/lib64:${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH="${SCRIPT_DIR}/protobuf/third_party/abseil-cpp/local/abseilcpp/lib:${LD_LIBRARY_PATH}"
 
 echo "Installing torchaudio..."
