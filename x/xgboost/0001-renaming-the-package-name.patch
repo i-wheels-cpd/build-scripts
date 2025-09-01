@@ -1,0 +1,31 @@
+From 36d4de6f65d386e834187149b36734ac0e816f16 Mon Sep 17 00:00:00 2001
+From: Srighakollapu-Sai-Srivatsa <Srighakollapu.Sai.Srivatsa@ibm.com>
+Date: Mon, 17 Mar 2025 13:41:43 +0000
+Subject: [PATCH] renaming the package name
+
+---
+ python-package/pyproject.toml | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/python-package/pyproject.toml b/python-package/pyproject.toml
+index 5a3b897d3..92b283b72 100644
+--- a/python-package/pyproject.toml
++++ b/python-package/pyproject.toml
+@@ -7,7 +7,7 @@ backend-path = ["."]
+ build-backend = "packager.pep517"
+
+ [project]
+-name = "xgboost"
++name = "xgboost-cpu"
+ description = "XGBoost Python Package"
+ readme = { file = "README.rst", content-type = "text/x-rst" }
+ authors = [
+@@ -85,3 +85,6 @@ class-attribute-naming-style = "snake_case"
+
+ # Allow single-letter variables
+ variable-rgx = "[a-zA-Z_][a-z0-9_]{0,30}$"
++
++[tool.hatch.build.targets.wheel]
++packages = ["xgboost/"]
+--
+2.43.5
