@@ -164,6 +164,7 @@ sed -i "s/cmake/cmake==3.*/g" requirements.txt
 
 python3.12 -m pip install -r requirements.txt
 MAX_JOBS=$(nproc) python3.12 setup.py install
+python3.12 -m pip install pytest
 
 cd $SCRIPT_DIR
 
@@ -204,7 +205,8 @@ fi
 #basic import test
 cd ..
 
-if ! (python3.12 -c "import torch; import torch._C; import torchaudio"); then
+if ! ( pytest test/torchaudio_unittest/ -p no:warnings --ignore=test/torchaudio_unittest/transforms/ --ignore=test/torchaudio_unittest/functional/ --ignore=test/torchaudio_unittest/models/wav2vec2/model_test.py --ignore=test/torchaudio_unittest/kaldi_io_test.py
+); then
      echo "--------------------$PACKAGE_NAME:Install_success_but_test_fails--------------------"
      echo "$PACKAGE_URL $PACKAGE_NAME"
      echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_success_but__Import_Fails"
