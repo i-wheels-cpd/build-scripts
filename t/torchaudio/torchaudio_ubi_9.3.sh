@@ -202,9 +202,7 @@ if ! (python3.12 -m pip install -v . --no-build-isolation --no-deps);then
     exit 1
 fi
 
-#basic import test
-cd ..
-
+#test
 if ! ( pytest test/torchaudio_unittest/ -p no:warnings --ignore=test/torchaudio_unittest/transforms/ --ignore=test/torchaudio_unittest/functional/ --ignore=test/torchaudio_unittest/models/wav2vec2/model_test.py --ignore=test/torchaudio_unittest/kaldi_io_test.py
 ); then
      echo "--------------------$PACKAGE_NAME:Install_success_but_test_fails--------------------"
