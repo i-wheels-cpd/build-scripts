@@ -174,6 +174,9 @@ git clone $PACKAGE_URL
 cd $PACKAGE_NAME
 git checkout $PACKAGE_VERSION
 
+#re-enable gcc-13
+source /opt/rh/gcc-toolset-13/enable
+
 # Apply the patch
 echo "------------------------Applying patch-------------------"
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/t/torchaudio/torchaudio_v2.6.0.patch
