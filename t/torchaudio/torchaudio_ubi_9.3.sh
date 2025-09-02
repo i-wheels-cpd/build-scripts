@@ -165,7 +165,7 @@ sed -i "s/cmake/cmake==3.*/g" requirements.txt
 python3.12 -m pip install -r requirements.txt
 MAX_JOBS=$(nproc) python3.12 setup.py install
 python3.12 -m pip install pytest
-
+python3.12 -m pip install numpy==2.0.2 setuptools ninja scipy==1.15.2 llvmlite numba
 cd $SCRIPT_DIR
 
 echo "------------------------clone and build torchaudio-------------------"
@@ -203,7 +203,7 @@ if ! (python3.12 -m pip install -v . --no-build-isolation --no-deps);then
 fi
 
 #test
-if ! ( pytest test/torchaudio_unittest/ -p no:warnings --ignore=test/torchaudio_unittest/transforms/ --ignore=test/torchaudio_unittest/functional/ --ignore=test/torchaudio_unittest/models/wav2vec2/model_test.py --ignore=test/torchaudio_unittest/kaldi_io_test.py
+if ! ( pytest -v test/torchaudio_unittest/ --ignore-glob='*gpu_test.py' --ignore=test/torchaudio_unittest/transforms/ --ignore=test/torchaudio_unittest/functional/ --ignore=test/torchaudio_unittest/models/wav2vec2/model_test.py --ignore=test/torchaudio_unittest/kaldi_io_test.py
 ); then
      echo "--------------------$PACKAGE_NAME:Install_success_but_test_fails--------------------"
      echo "$PACKAGE_URL $PACKAGE_NAME"
