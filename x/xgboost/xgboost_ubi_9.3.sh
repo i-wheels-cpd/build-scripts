@@ -155,7 +155,7 @@ echo "Current directory: $(pwd)"
 echo "Removing nvidia-nccl-cu12 dependency from pyproject.toml..."
 sed -i '/nvidia-nccl-cu12/d' pyproject.toml
 
-# Ensure no build isolation and deps are used
+# install package
 if ! (pip3.12 install .); then
     echo "------------------$PACKAGE_NAME:Install_fails-------------------------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
