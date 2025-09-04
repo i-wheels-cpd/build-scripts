@@ -61,6 +61,8 @@ if ! (python3.12 -m pip install .) ; then
     exit 1
 fi
 
+# Wheel buiiling
+python3.12 -m pip wheel -w $CURRENT_DIR -vv --no-build-isolation --no-deps .
 
 # Run test
 if ! pytest tensorflow_metadata/ ; then
