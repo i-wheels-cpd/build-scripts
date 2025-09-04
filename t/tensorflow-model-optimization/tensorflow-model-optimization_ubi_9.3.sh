@@ -27,7 +27,7 @@ WORK_DIR=${PWD}
 
 yum install -y git make cmake zip tar wget python3.12 python3.12-devel python3.12-pip gcc-toolset-13 gcc-toolset-13-gcc-c++ gcc-toolset-13-gcc zlib-devel libjpeg-devel openssl openssl-devel freetype-devel pkgconfig ninja-build sqlite-devel rsync
 
-python3.12 -m pip install numpy==2.0.2 setuptools wheel build
+python3.12 -m pip install numpy setuptools wheel build
 
 export GCC_TOOLSET_PATH=/opt/rh/gcc-toolset-13/root/usr
 export PATH=$GCC_TOOLSET_PATH/bin:$PATH
@@ -36,11 +36,6 @@ cd $WORK_DIR
 git clone $PACKAGE_URL
 cd $PACKAGE_NAME
 git checkout $PACKAGE_VERSION
-
-sed -i "s/numpy~=1.23/numpy==2.0.2/g" setup.py
-sed -i "s/numpy~=1.23.0/numpy==2.0.2/g" requirements.txt
-sed -i "s/absl-py~=1.2/absl-py~=2.3/g" setup.py
-sed -i "s/absl-py~=1.2/absl-py~=2.3/g" requirements.txt
 
 
 #Build package
@@ -58,7 +53,7 @@ sed -i '/def has_ext_modules(self):/{n;s/return False/return True/;}' setup.py
 python3.12 setup.py bdist_wheel --release --dist-dir $WORK_DIR
 echo "---------Wheel Built successfully---------"
 
-python3.12 -m pip install numpy==2.0.2 tensorflow_cpu==2.18.1 tf-keras==2.18.0 tensorflow==2.18.0 mock scipy 
+python3.12 -m pip install tensorflow_cpu==2.18.1 tf-keras==2.18.0 tensorflow==2.18.0 mock scipy 
 
 
 #There are effectively no proper runnable tests in this repo; attempts to run them either fail with TensorFlow graph errors or hang indefinitely. The failures suggest that the tests require extensive system resources such as high CPU availability or CUDA-enabled GPU support to execute successfully.
