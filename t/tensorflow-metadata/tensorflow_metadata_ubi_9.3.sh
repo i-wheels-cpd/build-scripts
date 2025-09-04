@@ -32,9 +32,6 @@ python3.12 -m pip install setuptools wheel build pytest
 export GCC_TOOLSET_PATH=/opt/rh/gcc-toolset-13/root/usr
 export PATH=$GCC_TOOLSET_PATH/bin:$PATH
 
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-export PATH=$PATH:$JAVA_HOME/bin
-
 
 cd $CURRENT_DIR
 git clone $PACKAGE_URL
