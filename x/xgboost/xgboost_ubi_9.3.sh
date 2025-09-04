@@ -123,12 +123,7 @@ echo "SRC_DIR: $SRC_DIR"
 # Apply the patch
 echo "------------------------Applying patch-------------------"
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/x/xgboost/0001-renaming-the-package-name.patch
-# git am 0001-renaming-the-package-name.patch
-# Step 1: Check if it will work
-git apply --check 0001-renaming-the-package-name.patch
-
-# Step 2: If okay, apply it
-git apply 0001-renaming-the-package-name.patch
+sed -n '/^diff --git/,/^--$/p' 0001-renaming-the-package-name.patch | sed 's/\r$//' | git apply
 echo "-----------------------Applied patch successfully---------------------------------------"
 
 #build xgboost cpp artifacts
