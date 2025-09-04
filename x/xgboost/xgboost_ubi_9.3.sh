@@ -124,7 +124,7 @@ echo "SRC_DIR: $SRC_DIR"
 echo "------------------------Applying patch-------------------"
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/x/xgboost/0001-renaming-the-package-name.patch
 sed -n '/^diff --git /,$p' 0001-renaming-the-package-name.patch | \
-  sed '/^@@ -7,7 +7,7 @@ backend-path = \["."\]/,/^@@/d' | \
+  sed '/^@@ -7,7 +7,7 @@ backend-path = \["."\]/,/^+.*\[tool\.hatch\.build\.targets\.wheel\]/d' | \
   sed 's/\r$//' | \
   grep -v '^From ' | \
   git apply
