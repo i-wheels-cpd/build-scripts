@@ -32,6 +32,20 @@ python3.12 -m pip install setuptools wheel build pytest
 export GCC_TOOLSET_PATH=/opt/rh/gcc-toolset-13/root/usr
 export PATH=$GCC_TOOLSET_PATH/bin:$PATH
 
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+export PATH=$PATH:$JAVA_HOME/bin
+
+#Build bazel from source
+cd $CURRENT_DIR
+mkdir bazel
+cd bazel
+wget https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel-6.5.0-dist.zip
+unzip bazel-6.5.0-dist.zip
+env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
+cp output/bazel /usr/local/bin
+export PATH=/usr/local/bin:$PATH
+bazel --version
+echo "-----------------------------------------------------Installed bazel-----------------------------------------------------"
 
 cd $CURRENT_DIR
 git clone $PACKAGE_URL
