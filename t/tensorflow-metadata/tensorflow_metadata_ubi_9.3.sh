@@ -3,7 +3,7 @@
 #
 # Package          : tensorflow-metadata
 # Version          : v1.16.1
-# Source repo      : https://github.com/tensorflow/model-optimization
+# Source repo      : https://github.com/tensorflow/metadata
 # Tested on        : UBI:9.3
 # Language         : Python
 # Travis-Check     : True
