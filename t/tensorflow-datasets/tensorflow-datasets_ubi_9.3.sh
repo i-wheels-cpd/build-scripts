@@ -347,7 +347,7 @@ if ! (python3.12 -m pip install .) ; then
 fi
 
 # Wheel building
-python3.12 setup.py bdist_wheel --dist-dir $CURRENT_DIR
+python3.12 setup.py bdist_wheel --plat-name=linux_x86_64 --dist-dir=$CURRENT_DIR
 
 #Installing test dependencies
 python3.12 -m pip install pytest dill pyyaml cloudpickle pydub tensorflow_docs google-auth gcsfs conllu bs4 pretty_midi tifffile tldextract langdetect lxml mwparserfromhell nltk==3.8.1 tensorflow==2.18.1 array-record psutil pyarrow dm-tree attrs etils[enp,epath,etree] numpy==2.0.2 importlib_resources tqdm tensorflow_metadata promise click toml requests termcolor wrapt immutabledict simple_parsing mlcroissant pandas apache_beam pillow jax matplotlib
