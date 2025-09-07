@@ -122,23 +122,18 @@ echo "SRC_DIR: $SRC_DIR"
 
 # Apply the patch
 echo "------------------------Applying patch-------------------"
-wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/x/xgboost/0001-renaming-the-package-name.patch
+PATCH_FILE="$SCRIPT_DIR/0001-renaming-the-package-name.patch"
+wget -O "$PATCH_FILE" https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/x/xgboost/0001-renaming-the-package-name.patch
 
-# Move into source directory before applying
 cd "$SRC_DIR"
-
-# Apply patch directly
-if git apply ../0001-renaming-the-package-name.patch; then
+if git apply "$PATCH_FILE"; then
     echo "Patch applied successfully."
 else
     echo "Patch failed to apply. Injecting wheel section manually..."
     PYPROJECT_FILE="$SRC_DIR/python-package/pyproject.toml"
-    grep -q "\[tool.hatch.build.targets.wheel\]" "$PYPROJECT_FILE" || {
-        sed -i '/variable-rgx = "[a-zA-Z_][a-z0-9_]{0,30}$"/a\
-\
-[tool.hatch.build.targets.wheel]\n\
-packages = ["xgboost/"]' "$PYPROJECT_FILE"
-    }
+    if ! grep -q "\[tool.hatch.build.targets.wheel\]" "$PYPROJECT_FILE"; then
+        echo -e "\n[tool.hatch.build.targets.wheel]\npackages = [\"xgboost/\"]" >> "$PYPROJECT_FILE"
+    fi
 fi
 
 # Verify patch effect
