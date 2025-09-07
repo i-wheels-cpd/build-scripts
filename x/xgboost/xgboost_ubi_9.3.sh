@@ -123,10 +123,31 @@ echo "SRC_DIR: $SRC_DIR"
 # Apply the patch
 echo "------------------------Applying patch-------------------"
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/x/xgboost/0001-renaming-the-package-name.patch
-sed -e 's/\xc2\xa0/ /g' -e 's/\r$//' 0001-renaming-the-package-name.patch | \
-  sed -n '/^diff --git /,$p' | \
-  git apply
-echo "-----------------------Applied patch successfully---------------------------------------"
+
+# Move into source directory before applying
+cd "$SRC_DIR"
+
+# Apply patch directly
+if git apply ../0001-renaming-the-package-name.patch; then
+    echo "Patch applied successfully."
+else
+    echo "Patch failed to apply. Injecting wheel section manually..."
+    PYPROJECT_FILE="$SRC_DIR/python-package/pyproject.toml"
+    grep -q "\[tool.hatch.build.targets.wheel\]" "$PYPROJECT_FILE" || {
+        sed -i '/variable-rgx = "[a-zA-Z_][a-z0-9_]{0,30}$"/a\
+\
+[tool.hatch.build.targets.wheel]\n\
+packages = ["xgboost/"]' "$PYPROJECT_FILE"
+    }
+fi
+
+# Verify patch effect
+grep -A 2 '\[tool.hatch.build.targets.wheel\]' "$SRC_DIR/python-package/pyproject.toml" || {
+    echo "Patch section not found. Failing build."
+    exit 1
+}
+
+echo "-----------------------Patch application completed---------------------------------------"
 
 #build xgboost cpp artifacts
 cd ${SCRIPT_DIR} && mkdir output && OUTPUT_FOLDER=$(pwd)
