@@ -108,7 +108,7 @@ echo " ------------------------------------------ Openblas Successfully Installe
 cd ${SCRIPT_DIR}
 
 pip3.12 install numpy==2.0.2 packaging pathspec pluggy scipy==1.15.2 scikit-learn==1.6.1 trove-classifiers wheel build hatchling joblib threadpoolctl
-pip3.12 install pytest hypothesis pandas matplotlib pyarrow dask modin shap  pyspark
+pip3.12 install pytest hypothesis pandas matplotlib pyarrow dask modin shap  pyspark modin[ray] modin[dask] modin[unidist]
 
 # Clone the repository
 echo "Cloning the repository..."
