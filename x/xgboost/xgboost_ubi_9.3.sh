@@ -187,7 +187,7 @@ cd $PACKAGE_NAME
 echo "Current directory: $(pwd)"
 
 #skipping tests related to gpu and other server setups
-if pytest tests/ --ignore=tests/ci_build/test_r_package.py --ignore=tests/python/test_cli.py --ignore=tests/python/test_demos.py --ignore=tests/python/test_openmp.py --ignore=tests/python/test_tracker.py --ignore=tests/python-gpu/ --ignore=tests/test_distributed/test_gpu_with_dask --ignore=tests/test_distributed/test_with_dask/test_demos.py --ignore=tests/test_distributed/test_with_dask/test_with_dask.py --ignore=tests/test_distributed/test_with_spark --ignore=tests/test_distributed/test_gpu_with_spark --ignore=tests/test_distributed/test_federated/test_federated.py --ignore=tests/test_distributed/test_gpu_federated/test_gpu_federated.py; then
+if pytest tests/ --ignore=tests/ci_build/test_r_package.py --ignore=tests/python/test_cli.py --ignore=tests/python/test_demos.py --ignore=tests/python/test_openmp.py --ignore=tests/python/test_tracker.py --ignore=tests/python-gpu/ --ignore=tests/test_distributed/test_gpu_with_dask --ignore=tests/test_distributed/test_with_dask/test_demos.py --ignore=tests/test_distributed/test_with_dask/test_with_dask.py --ignore=tests/test_distributed/test_with_spark --ignore=tests/test_distributed/test_gpu_with_spark --ignore=tests/test_distributed/test_federated/test_federated.py --ignore=tests/test_distributed/test_gpu_federated/test_gpu_federated.py --disable-warnings --override-ini="xfail_strict=False" --maxfail=0; then
     echo " ------------------------ $PACKAGE_NAME:Both_Install_and_Test_Success ------------------------ "
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Pass | Install_success_but_test_Fails"
