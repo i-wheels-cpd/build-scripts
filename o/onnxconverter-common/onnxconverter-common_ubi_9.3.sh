@@ -149,9 +149,10 @@ git checkout v1.21.0
 sed -i 's/python3/python3.12/g' build.sh
 
 echo " --------------------------------------------------- Building Onnxruntime --------------------------------------------------- "
+pip3.12 install 'cmake==3.31.6' numpy==2.0.2
+
 export CXXFLAGS="-Wno-stringop-overflow"
 export CFLAGS="-Wno-stringop-overflow"
-#export LD_LIBRARY_PATH=/OpenBLAS:/OpenBLAS/libopenblas.so.0:$LD_LIBRARY_PATH
 
 python3 -m pip install packaging wheel
 NUMPY_INCLUDE=$(python3 -c "import numpy; print(numpy.get_include())")
