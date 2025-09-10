@@ -28,11 +28,12 @@ CURRENT_DIR=$(pwd)
 echo "Installing dependencies..."
 
 yum install -y git wget make libtool gcc-toolset-13 gcc-toolset-13-gcc gcc-toolset-13-gcc-c++ gcc-toolset-13-gcc-gfortran clang libevent-devel zlib-devel openssl-devel python python-devel python3.12 python3.12-devel python3.12-pip cmake patch
+
 export PATH=/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
 export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-13/root/usr/lib64:$LD_LIBRARY_PATH
 
 pip3.12 install --upgrade pip setuptools wheel ninja packaging tox pytest build mypy stubs
-pip3.12 install 'cmake==3.31.6' numpy==2.0.2 onnx==1.17.0
+pip3.12 install 'cmake==3.31.6' onnx==1.17.0
 
 echo " --------------------------------------------------- Abseil-cpp Cloning --------------------------------------------------- "
 
@@ -114,8 +115,6 @@ pip3.12 install pybind11==2.12.0
 PYBIND11_PREFIX=$SITE_PACKAGE_PATH/pybind11
 
 export CMAKE_PREFIX_PATH="$ABSEIL_PREFIX;$LIBPROTO_INSTALL;$PYBIND11_PREFIX"
-#echo "Updated CMAKE_PREFIX_PATH after OpenBLAS: $CMAKE_PREFIX_PATH"
-
 export LD_LIBRARY_PATH="$LIBPROTO_INSTALL/lib64:$ABSEIL_PREFIX/lib:$LD_LIBRARY_PATH"
 echo "Updated LD_LIBRARY_PATH : $LD_LIBRARY_PATH"
 
