@@ -4,7 +4,7 @@
 # Package          : onnxconverter-common
 # Version          : v1.14.0
 # Source repo      : https://github.com/microsoft/onnxconverter-common
-# Tested on        : UBI:9.3
+# Tested on        : UBI:9.6
 # Language         : Python
 # Travis-Check     : True
 # Script License   : Apache License, Version 2 or later
