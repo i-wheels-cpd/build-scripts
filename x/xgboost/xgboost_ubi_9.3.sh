@@ -81,7 +81,7 @@ build_opts+=(NO_LAPACK=0)
 
 # Enable threading and set the number of threads
 build_opts+=(USE_THREAD=1)
-build_opts+=(NUM_THREADS=8)
+build_opts+=(NUM_THREADS=120)
 
 # Disable CPU/memory affinity handling to avoid problems with NumPy and R
 build_opts+=(NO_AFFINITY=1)
@@ -120,12 +120,7 @@ git submodule update --init
 export SRC_DIR=$(pwd)
 echo "SRC_DIR: $SRC_DIR"
 
-# Apply the patch
-echo "------------------------Applying patch-------------------"
-PATCH_FILE="$SCRIPT_DIR/0001-renaming-the-package-name.patch"
-wget -O "$PATCH_FILE" https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/x/xgboost/0001-renaming-the-package-name.patch
-cd "$SRC_DIR" && git apply "$SCRIPT_DIR/0001-renaming-the-package-name.patch"
-echo "-----------------------Patch application completed---------------------------------------"
+echo -e '\n[tool.hatch.build.targets.wheel]\npackages = ["xgboost/"]' >> python-package/pyproject.toml
 
 #build xgboost cpp artifacts
 cd ${SCRIPT_DIR} && mkdir output && OUTPUT_FOLDER=$(pwd)
