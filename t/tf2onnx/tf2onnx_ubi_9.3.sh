@@ -159,9 +159,10 @@ echo "protobuf build starts!!"
 cd protobuf
 git submodule update --init --recursive
 rm -rf ./third_party/googletest | true
-rm -rf ./third_party/abseil-cpp | true
 
-cp -r $CURRENT_DIR/abseil-cpp ./third_party/
+# rm -rf ./third_party/abseil-cpp | true
+# cp -r $CURRENT_DIR/abseil-cpp ./third_party/
+
 mkdir build
 cd build
 
