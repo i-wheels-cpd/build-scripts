@@ -551,7 +551,7 @@ pip3.12 uninstall nbval -y
 
 echo " --------------------------------- Running Tests --------------------------------- "
 
-if !  pytest -v --disable-warnings -q   --ignore=tests/test_cond.py --ignore=tests/test_const_fold.py --ignore=tests/test_cudnn_compatible_gru.py   --ignore=tests/test_custom_rnncell.py   --ignore=tests/test_gru.py   --ignore=tests/test_grublock.py   --ignore=tests/test_lstm.py   --ignore=tests/test_lstmblock.py   --ignore=tests/test_seq2seq.py   --ignore=tests/test_stacked_lstm.py --ignore=tests/test_backend.py --ignore=tests/test_convert.py --ignore=tests/test_loops.py --ignore=tests/test_tflite_postprocess.py --ignore=tests/test_api.py --ignore=tests/test_optimizers.py"; then
+if ! pytest -v --disable-warnings -q  --ignore=tests/test_cond.py --ignore=tests/test_const_fold.py --ignore=tests/test_cudnn_compatible_gru.py --ignore=tests/test_custom_rnncell.py --ignore=tests/test_gru.py --ignore=tests/test_grublock.py --ignore=tests/test_lstm.py --ignore=tests/test_lstmblock.py --ignore=tests/test_seq2seq.py --ignore=tests/test_stacked_lstm.py --ignore=tests/test_backend.py --ignore=tests/test_convert.py --ignore=tests/test_loops.py --ignore=tests/test_tflite_postprocess.py --ignore=tests/test_api.py --ignore=tests/test_optimizers.py; then
     echo "------------------$PACKAGE_NAME:Install_success_but_test_fails---------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_success_but_test_Fails"
