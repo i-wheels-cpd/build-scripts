@@ -4,7 +4,7 @@
 # Package       : tf2onnx
 # Version       : v1.16.1
 # Source repo   : https://github.com/onnx/tensorflow-onnx
-# Tested on     : UBI 9.3
+# Tested on     : UBI 9.6
 # Language      : Python
 # Travis-Check  : True
 # Script License: Apache License 2.0
@@ -135,21 +135,9 @@ cd $CURRENT_DIR
 python3.12 -c "import h5py; print(h5py.__version__)"
 echo " --------------------------------- H5py Successfully Installed --------------------------------- "
 
+# Export GCC-13 library paths for consistent compiler usage across the build
 export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-13/root/usr/lib64:$LD_LIBRARY_PATH
 python3.12 -m pip install --upgrade pip setuptools wheel ninja packaging tox pytest build mypy stubs
-
-#Build abseil-cpp from source
-echo " --------------------------------- Abseil-Cpp Cloning --------------------------------- "
-
-# Set ABSEIL_VERSION and ABSEIL_URL
-ABSEIL_VERSION=20240116.2
-ABSEIL_URL="https://github.com/abseil/abseil-cpp"
-
-git clone $ABSEIL_URL -b $ABSEIL_VERSION
-
-echo " --------------------------------- Abseil-Cpp Cloned --------------------------------- "
-
-cd $CURRENT_DIR
 
 export C_COMPILER=$(which gcc) CXX_COMPILER=$(which g++)
 echo "C Compiler set to $C_COMPILER"
@@ -484,7 +472,6 @@ git checkout v1.21.0
 
 export CXXFLAGS="-Wno-stringop-overflow"
 export CFLAGS="-Wno-stringop-overflow"
-export LD_LIBRARY_PATH=/OpenBLAS:/OpenBLAS/libopenblas.so.0:$LD_LIBRARY_PATH
 
 python3.12 -m pip install packaging wheel
 NUMPY_INCLUDE=$(python3.12 -c "import numpy; print(numpy.get_include())")
@@ -539,8 +526,8 @@ git clone $PACKAGE_URL
 cd $PACKAGE_DIR
 git checkout $PACKAGE_VERSION
 
-sed -i "s/protobuf~=[.0-9]\+/protobuf==4.25.8/g" setup.py
-sed -i "s/numpy>=1.14.1/numpy==2.0.2/g" setup.py
+# sed -i "s/protobuf~=[.0-9]\+/protobuf==4.25.8/g" setup.py
+# sed -i "s/numpy>=1.14.1/numpy==2.0.2/g" setup.py
 
 python3.12 -m pip install setuptools wheel build pytest parameterized timeout-decorator pytest-cov graphviz pytest-runner
 
