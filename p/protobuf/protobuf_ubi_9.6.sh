@@ -4,7 +4,7 @@
 # Package          : protobuf
 # Version          : v4.25.8
 # Source repo      : https://github.com/protocolbuffers/protobuf
-# Tested on   	   : UBI:9.3
+# Tested on   	   : UBI:9.6
 # Language         : Python
 # Travis-Check     : True
 # Script License   : Apache License, Version 2 or later
