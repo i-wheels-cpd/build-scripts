@@ -4,7 +4,7 @@
 # Package          : gensim
 # Version          : 4.3.3
 # Source repo      : https://github.com/piskvorky/gensim
-# Tested on        : UBI:9.3
+# Tested on        : UBI:9.6
 # Language         : Python
 # Travis-Check     : True
 # Script License   : Apache License, Version 2 or later
