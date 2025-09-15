@@ -35,16 +35,6 @@ export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-13/root/usr/lib64:$LD_LIBRARY_PATH
 pip3.12 install --upgrade pip setuptools wheel ninja packaging tox pytest build mypy stubs
 pip3.12 install 'cmake==3.31.6' onnx==1.17.0
 
-echo " --------------------------------------------------- Abseil-cpp Cloning --------------------------------------------------- "
-
-# Set ABSEIL_VERSION and ABSEIL_URL
-ABSEIL_VERSION=20240116.2
-ABSEIL_URL="https://github.com/abseil/abseil-cpp"
-
-git clone $ABSEIL_URL -b $ABSEIL_VERSION
-
-echo " --------------------------------------------------- Abseil-cpp Cloned --------------------------------------------------- "
-
 # Setting paths and versions
 export C_COMPILER=$(which gcc)
 export CXX_COMPILER=$(which g++)
@@ -67,8 +57,7 @@ echo "protobuf build starts!!"
 cd protobuf
 git submodule update --init --recursive
 rm -rf ./third_party/googletest | true
-rm -rf ./third_party/abseil-cpp | true
-cp -r $CURRENT_DIR/abseil-cpp ./third_party/
+
 mkdir build
 cd build
 cmake -G "Ninja" \
