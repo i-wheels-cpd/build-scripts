@@ -142,6 +142,7 @@ sed -i "s/python3/python$PYTHON_VERSION/g" build.sh
 export CXXFLAGS="-Wno-stringop-overflow"
 export CFLAGS="-Wno-stringop-overflow"
 
+python3.12 -m pip install packaging wheel
 python3.12 -m pip install numpy>=2.0.2
 NUMPY_INCLUDE=$(python3.12 -c "import numpy; print(numpy.get_include())")
 echo "NumPy include path: $NUMPY_INCLUDE"
