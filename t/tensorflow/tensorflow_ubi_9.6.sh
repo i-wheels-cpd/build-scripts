@@ -4,7 +4,7 @@
 # Package          : tensorflow
 # Version          : v2.18.1
 # Source repo      : https://github.com/tensorflow/tensorflow
-# Tested on        : UBI:9.3
+# Tested on        : UBI:9.6
 # Language         : Python
 # Travis-Check     : True
 # Script License   : Apache License, Version 2 or later
