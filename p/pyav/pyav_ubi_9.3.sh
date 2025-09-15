@@ -4,7 +4,7 @@
 # Package       : PyAV
 # Version       : v14.4.0
 # Source repo   : https://github.com/PyAV-Org/PyAV
-# Tested on     : UBI 9.3
+# Tested on     : UBI 9.6
 # Language      : Python
 # Travis-Check  : True
 # Script License: Apache License 2.0
