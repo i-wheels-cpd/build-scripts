@@ -87,7 +87,7 @@ pip install setuptools build wheel
 
 # Get pyproject.toml and prepare
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/l/lame/pyproject.toml
-sed -i s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g pyproject.toml
+sed -i "s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g" pyproject.toml
 
 # Build and install the Python package
 if ! (pip install .) ; then
