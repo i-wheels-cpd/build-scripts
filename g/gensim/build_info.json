@@ -1,0 +1,17 @@
+
+{
+  "maintainer": "ramnathnayak-ibm",
+  "package_name": "gensim",
+  "github_url": "https://github.com/piskvorky/gensim",
+  "version": "4.3.3",
+  "wheel_build" : true,
+  "default_branch": "develop",
+  "package_dir": "g/gensim",
+  "build_script": "gensim_ubi_9.6.sh",
+  "docker_build": false,
+  "validate_build_script": true,
+  "use_non_root_user": false,
+  "*": {
+     "build_script":"gensim_ubi_9.6.sh"
+  }
+}
