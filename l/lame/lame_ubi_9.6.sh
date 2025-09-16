@@ -83,7 +83,7 @@ cp -r $PREFIX/* local/lame/
 
 # Install setuptools and build the package
 echo "Installing setuptools and build tools..."
-pip install setuptools build
+pip install setuptools build wheel
 
 # Get pyproject.toml and prepare
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/l/lame/pyproject.toml
