@@ -7,10 +7,10 @@
   "wheel_build" : true,
   "package_dir": "l/libprotobuf",
   "docker_build": false,
-  "build_script": "libprotobuf_v4.25.8_ubi_9.3.sh",
+  "build_script": "libprotobuf_ubi_9.6.sh",
   "validate_build_script": true,
   "use_non_root_user": false,
   "*": {
-      "build_script": "libprotobuf_v4.25.8_ubi_9.3.sh"
+      "build_script": "libprotobuf_ubi_9.6.sh"
   }
 }

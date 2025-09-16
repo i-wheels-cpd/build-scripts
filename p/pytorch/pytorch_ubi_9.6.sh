@@ -4,7 +4,7 @@
 # Package          : torch
 # Version          : v2.6.0
 # Source repo      : https://github.com/pytorch/pytorch
-# Tested on        : UBI:9.3
+# Tested on        : UBI:9.6
 # Language         : Python
 # Travis-Check     : True
 # Script License   : Apache License, Version 2 or later
