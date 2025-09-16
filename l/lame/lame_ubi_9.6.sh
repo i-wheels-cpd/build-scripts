@@ -4,7 +4,7 @@
 # Package          : lame
 # Version          : 3.100
 # Source repo      : https://downloads.sourceforge.net/sourceforge/lame/lame/3.100.tar.gz
-# Tested on        : UBI:9.3
+# Tested on        : UBI:9.6
 # Language         : Python
 # Travis-Check     : True
 # Script License   : Apache License, Version 2 or later
