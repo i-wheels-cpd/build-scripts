@@ -22,6 +22,8 @@ docker_build_non_root() {
 if [[ "$TESTED_ON" == UBI:9* || "$TESTED_ON" == UBI9* ]];
 then
     ubi_version=$(echo "$TESTED_ON" | grep -oE '[0-9]+\.[0-9]+')
+    echo "-----------------------------------------tested on =  $TESTED_ON ----------------------------------------------------"
+    echo "----------------------------------------- ubi-version = $ubi_version ----------------------------------------------------"
     docker pull registry.access.redhat.com/ubi9/ubi:$ubi_version
     docker_image="registry.access.redhat.com/ubi9/ubi:$ubi_version"
     if [[ "$NON_ROOT_BUILD" == "true" ]];
