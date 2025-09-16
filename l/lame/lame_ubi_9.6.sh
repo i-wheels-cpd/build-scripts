@@ -98,6 +98,7 @@ if ! (pip install .) ; then
 fi
 
 # Build wheel and install from it
-python3 -m build --wheel --no-isolation --outdir "$CURRENT_DIR"
+#python3 -m build --wheel --no-isolation --outdir "$CURRENT_DIR"
+pip wheel . -w "$CURRENT_DIR"
 
 echo "LAME installation and testing completed successfully."
