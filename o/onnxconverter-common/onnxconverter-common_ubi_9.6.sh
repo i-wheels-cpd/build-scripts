@@ -133,10 +133,8 @@ git clone https://github.com/microsoft/onnxruntime $ONNXRUNTIME_SRC
 cd $ONNXRUNTIME_SRC
 git checkout v1.21.0
 
-# Update python version 
-PYTHON_VERSION="$1"
-sed -i "s/python3/python$PYTHON_VERSION/g" build.sh
-#sed -i 's/python3/python3.12/g' build.sh
+
+sed -i 's/python3/python3.12/g' build.sh
 
 # Fix NumPy issue
 export CXXFLAGS="-Wno-stringop-overflow"
