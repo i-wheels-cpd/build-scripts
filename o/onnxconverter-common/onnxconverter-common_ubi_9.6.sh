@@ -111,15 +111,12 @@ git checkout $PACKAGE_VERSION
 git submodule update --init --recursive
 
 # Update pyproject.toml dependencies with >=
-sed -i 's/\bprotobuf==[^ ]*\b/protobuf>=4.25.8/g' pyproject.toml
+sed -i 's/\bprotobuf==[^ ]*\b/protobuf>=4.25.8/g' pyproject.toml requirements.txt
+sed -i 's/"numpy"/"numpy>=2.0.2"/' pyproject.toml requirements.txt
+
 sed -i 's/\"onnx\"/\"onnx>=1.17.0\"/' pyproject.toml
-sed -i 's/\"numpy\"/\"numpy>=2.0.2\"/' pyproject.toml
 sed -i "/tool.setuptools.dynamic/d" pyproject.toml
 sed -i "/onnxconverter_common.__version__/d" pyproject.toml
-
-# Update requirements.txt
-sed -i 's/\"numpy\"/\"numpy>=2.0.2\"/' requirements.txt
-sed -i 's/\bprotobuf==[^ ]*\b/protobuf>=4.25.8/g' requirements.txt
 
 pip3.12 install flatbuffers onnxmltools
 
