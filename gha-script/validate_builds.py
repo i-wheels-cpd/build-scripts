@@ -13,7 +13,7 @@ HOME = os.getcwd()
 
 package_data = {}
 use_non_root = ""
-image_name = "registry.access.redhat.com/ubi9/ubi:9.6"
+image_name = "registry.access.redhat.com/ubi9/ubi:9.3"
 
 def trigger_basic_validation_checks(file_name):
     key_checks = {
