@@ -264,6 +264,8 @@ def trigger_basic_validation_checks(file_name):
                         matched_keys.append(key)
                         distro_data = line.split(':')[-1].strip()
                         distro_data = distro_data.split(' ')
+                        print("*******************************************************************************************")
+                        print("DEBUG distro_data:", distro_data) 
                         package_data["distro_name"] = distro_data[0]
                         package_data["distro_version"] = distro_data[-1]
 
