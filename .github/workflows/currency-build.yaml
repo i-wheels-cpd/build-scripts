@@ -73,6 +73,12 @@ jobs:
           chmod +x ./gha-script/read_buildinfo.sh
           bash ./gha-script/read_buildinfo.sh
 
+      - name: Check Disk Space Before showing variable.sh
+        run: |
+          df -hT
+          df -i
+          sudo du -hxd1 / | sort -hr | head -n 20
+
       - name: Show contents of variable.sh
         run: |
           echo "===== variable.sh ====="
