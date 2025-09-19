@@ -101,6 +101,13 @@ jobs:
         with:
           name: package-cache
           path: package-cache
+
+      - name: Check Disk Space After Checkout
+        run: |
+          df -hT
+          df -i
+          sudo du -hxd1 / | sort -hr | head -n 20
+
                 
 
   build:
@@ -110,12 +117,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check Disk Space before package-cache download
+        run: |
+            df -hT
+            df -i
+            sudo du -hxd1 / | sort -hr | head -n 20
+
       - name: Download package-cache
         uses: actions/download-artifact@v4
         with:
           name: package-cache
           path: package-cache
 
+      - name: Disk Space after package cache and Before Build
+        run: |
+          df -hT
+          sudo du -hxd1 / | sort -hr | head -n 20
      
        
       - name: Build Package
@@ -152,6 +169,13 @@ jobs:
           echo "-------------------- started upload -------------------------"
           bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
           echo "------------------ Done with upload ---------------------------"
+
+
+      - name: Disk Space After Build
+        run: |
+          df -hT
+          sudo du -hxd1 / | sort -hr | head -n 20
+
 
 
 
@@ -207,6 +231,12 @@ jobs:
         with:
           name: package-cache
           path: package-cache
+
+      - name: Check Disk Space Before Wheel Build
+        run: |
+          df -hT
+          sudo du -hxd1 / | sort -hr | head -n 20
+
 
       - name: Run build_wheels.sh
         run: |
@@ -312,4 +342,3 @@ jobs:
            tar cvzf source_scanner.tar.gz source
            chmod +x ./gha-script/upload-scripts/upload_file.sh
            bash ./gha-script/upload-scripts/upload_file.sh source_scanner.tar.gz
-
