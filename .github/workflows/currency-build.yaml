@@ -94,6 +94,14 @@ jobs:
           sudo mv variable.sh package-cache
           sudo mv scanner-env.sh package-cache
           echo "Moved scanner-env.sh and variable.sh into package-cache............"
+
+
+      - name: Check Disk Space Before uploading package-cache
+        run: |
+          df -hT
+          df -i
+          sudo du -hxd1 / | sort -hr | head -n 20
+
           
 
       - name: Upload variable.sh and scanner-env.sh via package-cache
@@ -102,7 +110,7 @@ jobs:
           name: package-cache
           path: package-cache
 
-      - name: Check Disk Space After Checkout
+      - name: Check Disk Space after uploading package-cache
         run: |
           df -hT
           df -i
