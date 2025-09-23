@@ -24,6 +24,7 @@ PACKAGE_NAME=FFmpeg
 PACKAGE_VERSION=${1:-n7.1}
 PACKAGE_URL=https://github.com/FFmpeg/FFmpeg
 WORK_DIR=$(pwd)
+PACKAGE_DIR=FFmpeg
 
 # Install dependencies
 yum install -y --allowerasing curl python3.12 python3.12-devel python3.12-pip gcc-toolset-13 make cmake \
@@ -304,3 +305,9 @@ else
     exit 2
 fi
 
+cd $WORK_DIR
+python3.12 -m pip install setuptools wheel build
+# Build wheel 
+python3.12 setup.py bdist_wheel --plat-name=linux_x86_64 --dist-dir=$WORK_DIR
+
+exit 0
