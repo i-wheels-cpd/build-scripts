@@ -27,9 +27,9 @@ WORK_DIR=$(pwd)
 PACKAGE_DIR=FFmpeg
 
 # Install dependencies
-yum install -y --allowerasing curl python3.12 python3.12-devel python3.12-pip gcc-toolset-13 make cmake \
+yum install -y --allowerasing curl python3.12 python3.12-devel python3.12-pip make cmake \
   git wget tar pkgconfig autoconf automake libtool zlib-devel freetype-devel \
-  gmp-devel openssl openssl-devel
+  gmp-devel openssl openssl-devel gcc-toolset-13
 
 export PATH=/opt/rh/gcc-toolset-13/root/usr/bin:$PATH
 
