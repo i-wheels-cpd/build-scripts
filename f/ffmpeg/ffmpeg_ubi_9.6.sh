@@ -4,7 +4,7 @@
 # Package       : ffmpeg
 # Version       : n7.1
 # Source repo   : https://github.com/FFmpeg/FFmpeg
-# Tested on     : UBI 9.6
+# Tested on     : UBI:9.6
 # Language      : Python
 # Travis-Check  : True
 # Script License: Apache License, Version 2 or later
