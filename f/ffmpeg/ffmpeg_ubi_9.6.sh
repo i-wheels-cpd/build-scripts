@@ -307,6 +307,6 @@ cd $WORK_DIR
 python3.12 -m pip install setuptools wheel build
 # Build wheel 
 #python3.12 setup.py bdist_wheel --plat-name=linux_x86_64 --outdir=$WORK_DIR
-python3.12 -m build --wheel --no-isolation --dist-dir=$WORK_DIR
+python3.12 -m build --wheel --no-isolation --outdir=$WORK_DIR
 
 exit 0
