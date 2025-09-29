@@ -148,20 +148,21 @@ jobs:
           sudo mkdir -p /mnt/work
           sudo chown -R $USER:$USER /mnt/work
 
-          echo ">>> Move workspace to /mnt"
-          rsync -a $GITHUB_WORKSPACE /mnt/work/
-          rm -rf $GITHUB_WORKSPACE
-          ln -s /mnt/work/$(basename $GITHUB_WORKSPACE) $GITHUB_WORKSPACE
+          echo ">>> Move workspace to /mnt safely"
+          # Use a temp dir to avoid deleting current working dir
+          rsync -a $GITHUB_WORKSPACE/ /mnt/work/ws/
+          mv $GITHUB_WORKSPACE /tmp/old_ws
+          ln -s /mnt/work/ws $GITHUB_WORKSPACE
 
-          echo ">>> Move Docker to /mnt (optional, if used)"
-          sudo systemctl stop docker
-          sudo rsync -a /var/lib/docker /mnt/work/
-          sudo rm -rf /var/lib/docker
-          sudo ln -s /mnt/work/docker /var/lib/docker
-          sudo systemctl start docker
+          echo ">>> Configure Docker to use /mnt (without systemctl)"
+          sudo mkdir -p /mnt/work/docker
+          sudo chown -R root:root /mnt/work/docker
+          echo '{ "data-root": "/mnt/work/docker" }' | sudo tee /etc/docker/daemon.json
+          sudo service docker restart || true
 
           echo ">>> Space after setup"
           df -h /
+          df -h /mnt
 
       - name: Download package-cache
         uses: actions/download-artifact@v4
