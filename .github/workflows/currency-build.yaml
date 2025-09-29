@@ -170,6 +170,12 @@ jobs:
           name: package-cache
           path: package-cache
 
+      - name: Check space usage before build
+        run: |
+          echo ">>> Before space usage"
+          df -h /
+          df -h /mnt
+
       - name: Build Package
         env:
           gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
