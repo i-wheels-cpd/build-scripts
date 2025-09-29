@@ -196,6 +196,15 @@ jobs:
           chmod +x ./gha-script/upload-scripts/upload_file.sh
           bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
 
+      - name: Verify workspace is on /mnt
+        run: |
+          echo ">>> Current workspace: $GITHUB_WORKSPACE"
+          ls -ld $GITHUB_WORKSPACE
+          echo ">>> Where is workspace actually pointing?"
+          readlink -f $GITHUB_WORKSPACE
+          echo ">>> Disk usage of workspace:"
+          df -hT $GITHUB_WORKSPACE
+
       - name: Check space usage after build
         run: |
           echo ">>> Final space usage"
