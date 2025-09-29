@@ -144,7 +144,8 @@ jobs:
           echo ">>> Using /mnt (74GB) for builds"
           df -h /mnt
 
-          mkdir -p /mnt/work
+          # Create work dir with sudo
+          sudo mkdir -p /mnt/work
           sudo chown -R $USER:$USER /mnt/work
 
           echo ">>> Move workspace to /mnt"
