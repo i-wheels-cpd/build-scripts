@@ -133,6 +133,8 @@ jobs:
 
 
   build:
+    needs: build_info
+    if: ${{ inputs.validate_build_script == 'true' }}
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
