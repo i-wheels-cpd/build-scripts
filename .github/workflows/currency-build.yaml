@@ -137,88 +137,84 @@ jobs:
     if: ${{ inputs.validate_build_script == 'true' }}
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Mount 66GB ephemeral disk
-      - name: Setup ephemeral storage
+      - name: Setup extra storage on /mnt
         run: |
-          echo ">>> Formatting and mounting 66GB ephemeral disk"
-          sudo mkfs.ext4 -F /dev/disk/by-id/ephemeral0
-          sudo mkdir -p /mnt/work
-          sudo mount /dev/disk/by-id/ephemeral0 /mnt/work
-          sudo chown -R $USER:$USER /mnt/work
+          echo ">>> Using /mnt (74GB) for builds"
           df -h /mnt
 
-          echo ">>> Linking /mnt/work to runner directories"
-          # Move workspace to /mnt
-          sudo rsync -a $GITHUB_WORKSPACE /mnt/work/
-          sudo rm -rf $GITHUB_WORKSPACE
-          sudo ln -s /mnt/work/$(basename $GITHUB_WORKSPACE) $GITHUB_WORKSPACE
+          mkdir -p /mnt/work
+          sudo chown -R $USER:$USER /mnt/work
 
-          # Move Docker to /mnt
+          echo ">>> Move workspace to /mnt"
+          rsync -a $GITHUB_WORKSPACE /mnt/work/
+          rm -rf $GITHUB_WORKSPACE
+          ln -s /mnt/work/$(basename $GITHUB_WORKSPACE) $GITHUB_WORKSPACE
+
+          echo ">>> Move Docker to /mnt (optional, if used)"
           sudo systemctl stop docker
           sudo rsync -a /var/lib/docker /mnt/work/
           sudo rm -rf /var/lib/docker
           sudo ln -s /mnt/work/docker /var/lib/docker
           sudo systemctl start docker
 
-          # Symlink a "spillover" directory to root disk
-          mkdir -p /mnt/work/spillover
-          ln -s /mnt/work/spillover /spill
-
-          echo ">>> Space usage after setup"
+          echo ">>> Space after setup"
           df -h /
 
-     
-      
+      - name: Download package-cache
+        uses: actions/download-artifact@v4
+        with:
+          name: package-cache
+          path: package-cache
 
       - name: Build Package
         env:
-             gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
+          gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
         run: |
-           echo ">>> Build starts using /mnt/work (66GB)"
-           echo ">>> If extra space needed, use /spill (27GB root)"
-           # Example: move temp dirs there
-           export TMPDIR=/spill
-           export TEMP=/spill
-           export TMP=/spill
-           export gha_currency_service_id_api_key_dev
-           echo "Sourcing variable.sh and scanner-env.sh..........................................."
-           source package-cache/variable.sh
-           source package-cache/scanner-env.sh
-           echo "===== variable.sh ====="
-           cat package-cache/variable.sh
-           echo "===== scanner-env.sh ====="
-           cat package-cache/scanner-env.sh
-           echo "==============LSCPU================"
-           lscpu
-           echo "==================================="
-           chmod +x ./gha-script/build_package.sh
-           bash ./gha-script/build_package.sh
-           cloned_package=$(ls -td -- */ | head -n 1)
-           sudo mv "$cloned_package" package-cache
-           echo "export CLONED_PACKAGE=\"$cloned_package\"" >> package-cache/scanner-env.sh
-           echo "-------------updated scanner-env.sh-----------------------"
-           cat  package-cache/scanner-env.sh
-           echo "---------------------------------------------"
-           cd package-cache
-           sudo chown $USER:$USER -R .
-           chmod +x ../gha-script/pre_process.sh
-           bash ../gha-script/pre_process.sh
-           cd $GITHUB_WORKSPACE
-           gzip build_log
-           echo "------------------- starting upload --------------------------"
-           chmod +x ./gha-script/upload-scripts/upload_file.sh
-           echo "-------------------- started upload -------------------------"
-           bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
-           echo "------------------ Done with upload ---------------------------"
+          export TMPDIR=/mnt/work/tmp
+          mkdir -p $TMPDIR
+          export gha_currency_service_id_api_key_dev
+          source package-cache/variable.sh
+          source package-cache/scanner-env.sh
+
+          chmod +x ./gha-script/build_package.sh
+          bash ./gha-script/build_package.sh
+
+          cloned_package=$(ls -td -- */ | head -n 1)
+          mv "$cloned_package" package-cache
+          echo "export CLONED_PACKAGE=\"$cloned_package\"" >> package-cache/scanner-env.sh
+
+          cd package-cache
+          chmod +x ../gha-script/pre_process.sh
+          bash ../gha-script/pre_process.sh
+          cd $GITHUB_WORKSPACE
+
+          gzip build_log
+          chmod +x ./gha-script/upload-scripts/upload_file.sh
+          bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
 
       - name: Check space usage after build
         run: |
           echo ">>> Final space usage"
           df -h /
           df -h /mnt
+
+      - name: Fix permissions on package-cache
+        run: |
+          USER=$(whoami)
+          echo "Current user: $USER"
+          echo "Fixing ownership and permissions for package-cache"
+          sudo chown -R $USER:$USER package-cache
+          sudo chmod -R u+rwX,go+rX,go-w package-cache
+
+      - name: Upload updated package-cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: updated-package-cache
+          path: package-cache
+
+      
 
           
 
@@ -291,13 +287,13 @@ jobs:
 
 
 
-  #     - name: Fix permissions on package-cache
-  #       run: |
-  #         USER=$(whoami)
-  #         echo "Current user: $USER"
-  #         echo "Fixing ownership and permissions for package-cache"
-  #         sudo chown -R $USER:$USER package-cache
-  #         sudo chmod -R u+rwX,go+rX,go-w package-cache
+      # - name: Fix permissions on package-cache
+      #   run: |
+      #     USER=$(whoami)
+      #     echo "Current user: $USER"
+      #     echo "Fixing ownership and permissions for package-cache"
+      #     sudo chown -R $USER:$USER package-cache
+      #     sudo chmod -R u+rwX,go+rX,go-w package-cache
          
   #     - name: Upload updated package-cache
   #       uses: actions/upload-artifact@v4
