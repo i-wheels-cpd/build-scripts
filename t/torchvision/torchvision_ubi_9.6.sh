@@ -160,7 +160,7 @@ export USE_TBB=
 export USE_LAPACK=1
 export BUILD_CUSTOM_PROTOBUF=OFF
 export BUILD_CAFFE2=1
-export PYTORCH_BUILD_VERSION=${PACKAGE_VERSION}
+export PYTORCH_BUILD_VERSION=2.6.0
 export PYTORCH_BUILD_NUMBER=${BUILD_NUM}
 export CMAKE_PREFIX_PATH="${SITE_PACKAGE_PATH}"
 export Protobuf_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf.so
@@ -170,6 +170,7 @@ export Protobuf_LIBRARIES=${LIBPROTO_INSTALL}/lib64
 export Protobuf_PROTOC_EXECUTABLE=${LIBPROTO_INSTALL}/bin/protoc
 export USE_TENSORRT=0
 MAX_JOBS=$(nproc) python3.12 setup.py install
+python3.12 setup.py bdist_wheel
 cd $CURRENT_DIR
 
 #installing openblas  
@@ -392,8 +393,11 @@ if ! (python3.12 -m pip install .) ; then
 fi
 
 #Build wheel
-python3.12 setup.py bdist_wheel --dist-dir=$CURRENT_DIR
-python3.12 -m pip install $CURRENT_DIR/torchvision*.whl
+python3.12 setup.py bdist_wheel
+cp dist/*.whl $CURRENT_DIR
+python3.12 -m pip install $CURRENT_DIR/torchvision*.whl --force-reinstall
+python3.12 -m pip install $CURRENT_DIR/pytorch/dist/*.whl
+python3.12 -m pip install triton==3.2.0
 
 # Run test
 # Skipping tests related to video and legacy image formats due to unsupported or missing runtime dependencies causing failures.
