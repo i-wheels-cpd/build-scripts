@@ -346,6 +346,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup extra storage on /mnt
+        run: |
+          echo ">>> Using /mnt (74GB) for builds"
+          df -h /mnt
+
+          # Create work dir with sudo
+          sudo mkdir -p /mnt/work
+          sudo chown -R $USER:$USER /mnt/work
+
+          echo ">>> Move workspace to /mnt safely"
+          # Use a temp dir to avoid deleting current working dir
+          rsync -a $GITHUB_WORKSPACE/ /mnt/work/ws/
+          mv $GITHUB_WORKSPACE /tmp/old_ws
+          ln -s /mnt/work/ws $GITHUB_WORKSPACE
+
+          echo ">>> Configure Docker to use /mnt (without systemctl)"
+          sudo mkdir -p /mnt/work/docker
+          sudo chown -R root:root /mnt/work/docker
+          echo '{ "data-root": "/mnt/work/docker" }' | sudo tee /etc/docker/daemon.json
+          sudo service docker restart || true
+
+          echo ">>> Space after setup"
+          df -h /
+          df -h /mnt
+
+
       - name: Install system dependencies
         run: |
           sudo apt update -y
@@ -357,10 +383,12 @@ jobs:
           name: package-cache
           path: package-cache
 
-      - name: Check Disk Space Before Wheel Build
+      
+      - name: Check space usage before Wheel Build
         run: |
-          df -hT
-          sudo du -hxd1 / | sort -hr | head -n 20
+          echo ">>> Before space usage"
+          df -h /
+          df -h /mnt
 
 
       - name: Run build_wheels.sh
@@ -382,6 +410,22 @@ jobs:
           sudo uname -a
           
         continue-on-error: ${{ matrix.allow-failure }}
+
+
+      - name: Verify workspace is on /mnt
+        run: |
+          echo ">>> Current workspace: $GITHUB_WORKSPACE"
+          ls -ld $GITHUB_WORKSPACE
+          echo ">>> Where is workspace actually pointing?"
+          readlink -f $GITHUB_WORKSPACE
+          echo ">>> Disk usage of workspace:"
+          df -hT $GITHUB_WORKSPACE
+
+      - name: Check space usage after build wheel
+        run: |
+          echo ">>> Final space usage"
+          df -h /
+          df -h /mnt
 
       - name: Upload wheel artifact using custom script
         run: |
