@@ -189,6 +189,11 @@ jobs:
           chmod +x ./gha-script/build_package.sh
           bash ./gha-script/build_package.sh
 
+          # Fix permissions before moving
+          echo ">>> Fixing permissions before mv"
+          sudo chown -R $USER:$USER package-cache
+          sudo chmod -R u+rwX,go+rX,go-w package-cache
+
           cloned_package=$(ls -td -- */ | head -n 1)
           mv "$cloned_package" package-cache
           echo "export CLONED_PACKAGE=\"$cloned_package\"" >> package-cache/scanner-env.sh
