@@ -3,7 +3,7 @@ name: Currency Build
 on:
   workflow_dispatch:
     branches:
-      - main
+      - main 
       - disck-space
     inputs:
       package_name:
@@ -41,12 +41,9 @@ on:
         required: false
         default: 'None'
 
-run-name: Currency Build ${{ inputs.package_name }} | Unique ID: ${{ inputs.unique_id }}
+run-name: Currency Build ${{ inputs.package_name }} && Unique ID ${{ inputs.unique_id }}
 
 jobs:
-  ###########################################################################
-  # 1. BUILD INFO JOB
-  ###########################################################################
   build_info:
     runs-on: ubuntu-24.04
     env:
@@ -54,25 +51,27 @@ jobs:
       VERSION: ${{ inputs.version }}
       VALIDATE_BUILD_SCRIPT: ${{ inputs.validate_build_script }}
       WHEEL_BUILD: ${{ inputs.wheel_build }}
-      BUILD_DOCKER: ${{ inputs.build_docker }}
+      build_docker: ${{ inputs.build_docker }}
       ENABLE_TRIVY: ${{ inputs.enable_trivy }}
       ENABLE_SYFT: ${{ inputs.enable_syft }}
       ENABLE_GRYPE: ${{ inputs.enable_grype }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check initial disk space
+      - name: Check Disk Space for package-cache
         run: |
           df -hT
           df -i
           sudo du -hxd1 / | sort -hr | head -n 20
 
-      - name: Install dependencies
+      - name: Install system packages
         run: |
           sudo apt update -y
           sudo apt install -y jq file
+          
+      - name: Install Python dependencies
+        run: |
           pip3 install --force-reinstall -v "requests==2.31.0"
           pip3 install --upgrade docker
 
@@ -81,53 +80,88 @@ jobs:
           chmod +x ./gha-script/read_buildinfo.sh
           bash ./gha-script/read_buildinfo.sh
 
-      - name: Show variable.sh
+      - name: Check Disk Space Before showing variable.sh
+        run: |
+          df -hT
+          df -i
+          sudo du -hxd1 / | sort -hr | head -n 20
+
+      - name: Show contents of variable.sh
         run: |
           echo "===== variable.sh ====="
           cat variable.sh
           echo "======================="
 
-      - name: Create package-cache & scanner-env.sh
+      - name: Create scanner-env.sh
         run: |
-          mkdir -p package-cache
+          echo "Creating package-cache........."
+          mkdir package-cache
+          echo "Creating scanner-env.sh ......."
           echo "export VALIDATE_BUILD_SCRIPT='${{ inputs.validate_build_script }}'" > scanner-env.sh
           echo "export BUILD_DOCKER='${{ inputs.build_docker }}'" >> scanner-env.sh
-          echo "export PACKAGE_NAME='${{ inputs.package_name }}'" >> scanner-env.sh
+          echo "export PACKAGE_NAME='${{ inputs.package_name }}'" >> scanner-env.sh         
           echo "===== scanner-env.sh ====="
           cat scanner-env.sh
+          echo "=========================="
+          echo "Moving scanner-env.sh and variable.sh into package-cache............"
+          sudo mv variable.sh package-cache
+          sudo mv scanner-env.sh package-cache
+          echo "Moved scanner-env.sh and variable.sh into package-cache............"
 
-          mv variable.sh package-cache/
-          mv scanner-env.sh package-cache/
-          echo "Files moved to package-cache"
 
-      - name: Upload package-cache
+      - name: Check Disk Space Before uploading package-cache
+        run: |
+          df -hT
+          df -i
+          sudo du -hxd1 / | sort -hr | head -n 20
+
+          
+
+      - name: Upload variable.sh and scanner-env.sh via package-cache
         uses: actions/upload-artifact@v4
         with:
           name: package-cache
           path: package-cache
 
-  ###########################################################################
-  # 2. BUILD JOB
-  ###########################################################################
+      - name: Check Disk Space after uploading package-cache
+        run: |
+          df -hT
+          df -i
+          sudo du -hxd1 / | sort -hr | head -n 20
+
+
+
+
   build:
     needs: build_info
     if: ${{ inputs.validate_build_script == 'true' }}
     runs-on: ubuntu-24.04
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup extra storage on /mnt
         run: |
-          echo ">>> Using /mnt for builds"
+          echo ">>> Using /mnt (74GB) for builds"
           df -h /mnt
-          sudo mkdir -p /mnt/work && sudo chown -R $USER:$USER /mnt/work
-          rsync -a $GITHUB_WORKSPACE/ /mnt/work/ws/
-          mv $GITHUB_WORKSPACE /tmp/old_ws && ln -s /mnt/work/ws $GITHUB_WORKSPACE
 
+          # Create work dir with sudo
+          sudo mkdir -p /mnt/work
+          sudo chown -R $USER:$USER /mnt/work
+
+          echo ">>> Move workspace to /mnt safely"
+          # Use a temp dir to avoid deleting current working dir
+          rsync -a $GITHUB_WORKSPACE/ /mnt/work/ws/
+          mv $GITHUB_WORKSPACE /tmp/old_ws
+          ln -s /mnt/work/ws $GITHUB_WORKSPACE
+
+          echo ">>> Configure Docker to use /mnt (without systemctl)"
           sudo mkdir -p /mnt/work/docker
+          sudo chown -R root:root /mnt/work/docker
           echo '{ "data-root": "/mnt/work/docker" }' | sudo tee /etc/docker/daemon.json
           sudo service docker restart || true
+
+          echo ">>> Space after setup"
+          df -h /
           df -h /mnt
 
       - name: Download package-cache
@@ -136,24 +170,32 @@ jobs:
           name: package-cache
           path: package-cache
 
+      - name: Check space usage before build
+        run: |
+          echo ">>> Before space usage"
+          df -h /
+          df -h /mnt
+
       - name: Build Package
         env:
           gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
         run: |
           export TMPDIR=/mnt/work/tmp
           mkdir -p $TMPDIR
+          export gha_currency_service_id_api_key_dev
           source package-cache/variable.sh
           source package-cache/scanner-env.sh
 
           chmod +x ./gha-script/build_package.sh
           bash ./gha-script/build_package.sh
 
-          # Fix permissions and move cloned package
+          # Fix permissions before moving
+          echo ">>> Fixing permissions before mv"
           sudo chown -R $USER:$USER package-cache
           sudo chmod -R u+rwX,go+rX,go-w package-cache
 
           cloned_package=$(ls -td -- */ | head -n 1)
-          mv "$cloned_package" package-cache/
+          mv "$cloned_package" package-cache
           echo "export CLONED_PACKAGE=\"$cloned_package\"" >> package-cache/scanner-env.sh
 
           cd package-cache
@@ -165,17 +207,125 @@ jobs:
           chmod +x ./gha-script/upload-scripts/upload_file.sh
           bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
 
+      - name: Verify workspace is on /mnt
+        run: |
+          echo ">>> Current workspace: $GITHUB_WORKSPACE"
+          ls -ld $GITHUB_WORKSPACE
+          echo ">>> Where is workspace actually pointing?"
+          readlink -f $GITHUB_WORKSPACE
+          echo ">>> Disk usage of workspace:"
+          df -hT $GITHUB_WORKSPACE
+
+      - name: Check space usage after build
+        run: |
+          echo ">>> Final space usage"
+          df -h /
+          df -h /mnt
+
+      - name: Fix permissions on package-cache
+        run: |
+          USER=$(whoami)
+          echo "Current user: $USER"
+          echo "Fixing ownership and permissions for package-cache"
+          sudo chown -R $USER:$USER package-cache
+          sudo chmod -R u+rwX,go+rX,go-w package-cache
+
       - name: Upload updated package-cache
         uses: actions/upload-artifact@v4
         with:
           name: updated-package-cache
           path: package-cache
 
-  ###########################################################################
-  # 3. WHEEL BUILD JOB
-  ###########################################################################
+      
+
+          
+
+  # build:
+  #   needs: build_info
+  #   if: ${{ inputs.validate_build_script == 'true' }}
+  #   runs-on: ubuntu-24.04
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Check Disk Space before package-cache download
+  #       run: |
+  #           df -hT
+  #           df -i
+  #           sudo du -hxd1 / | sort -hr | head -n 20
+
+  #     - name: Download package-cache
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: package-cache
+  #         path: package-cache
+
+  #     - name: Disk Space after package cache and Before Build
+  #       run: |
+  #         df -hT
+  #         sudo du -hxd1 / | sort -hr | head -n 20
+     
+       
+  #     - name: Build Package
+  #       env:
+  #         gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
+  #       run: |
+  #         export gha_currency_service_id_api_key_dev
+  #         echo "Sourcing variable.sh and scanner-env.sh..........................................."
+  #         source package-cache/variable.sh
+  #         source package-cache/scanner-env.sh
+  #         echo "===== variable.sh ====="
+  #         cat package-cache/variable.sh
+  #         echo "===== scanner-env.sh ====="
+  #         cat package-cache/scanner-env.sh
+  #         echo "==============LSCPU================"
+  #         lscpu
+  #         echo "==================================="
+  #         chmod +x ./gha-script/build_package.sh
+  #         bash ./gha-script/build_package.sh
+  #         cloned_package=$(ls -td -- */ | head -n 1)
+  #         sudo mv "$cloned_package" package-cache
+  #         echo "export CLONED_PACKAGE=\"$cloned_package\"" >> package-cache/scanner-env.sh
+  #         echo "-------------updated scanner-env.sh-----------------------"
+  #         cat  package-cache/scanner-env.sh
+  #         echo "---------------------------------------------"
+  #         cd package-cache
+  #         sudo chown $USER:$USER -R .
+  #         chmod +x ../gha-script/pre_process.sh
+  #         bash ../gha-script/pre_process.sh
+  #         cd $GITHUB_WORKSPACE
+  #         gzip build_log
+  #         echo "------------------- starting upload --------------------------"
+  #         chmod +x ./gha-script/upload-scripts/upload_file.sh
+  #         echo "-------------------- started upload -------------------------"
+  #         bash ./gha-script/upload-scripts/upload_file.sh build_log.gz
+  #         echo "------------------ Done with upload ---------------------------"
+
+
+  #     - name: Disk Space After Build
+  #       run: |
+  #         df -hT
+  #         sudo du -hxd1 / | sort -hr | head -n 20
+
+
+
+
+      # - name: Fix permissions on package-cache
+      #   run: |
+      #     USER=$(whoami)
+      #     echo "Current user: $USER"
+      #     echo "Fixing ownership and permissions for package-cache"
+      #     sudo chown -R $USER:$USER package-cache
+      #     sudo chmod -R u+rwX,go+rX,go-w package-cache
+         
+  #     - name: Upload updated package-cache
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: updated-package-cache
+  #         path: package-cache
+
   wheel_build:
     needs: build_info
+    name: Create Wheel for Python ${{ matrix.python-version }}
     if: ${{ inputs.wheel_build == 'true' }}
     runs-on: ubuntu-24.04
     strategy:
@@ -192,53 +342,113 @@ jobs:
             allow-failure: false
           - python-version: "3.13"
             allow-failure: true
-
     env:
       gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
       PYTHON_VERSION: ${{ matrix.python-version }}
       PACKAGE_NAME: ${{ inputs.package_name }}
       VERSION: ${{ inputs.version }}
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup extra storage on /mnt
         run: |
-          sudo mkdir -p /mnt/work && sudo chown -R $USER:$USER /mnt/work
+          echo ">>> Using /mnt (74GB) for builds"
+          df -h /mnt
+
+          # Create work dir with sudo
+          sudo mkdir -p /mnt/work
+          sudo chown -R $USER:$USER /mnt/work
+
+          echo ">>> Move workspace to /mnt safely"
+          # Use a temp dir to avoid deleting current working dir
           rsync -a $GITHUB_WORKSPACE/ /mnt/work/ws/
-          mv $GITHUB_WORKSPACE /tmp/old_ws && ln -s /mnt/work/ws $GITHUB_WORKSPACE
+          mv $GITHUB_WORKSPACE /tmp/old_ws
+          ln -s /mnt/work/ws $GITHUB_WORKSPACE
+
+          echo ">>> Configure Docker to use /mnt (without systemctl)"
           sudo mkdir -p /mnt/work/docker
+          sudo chown -R root:root /mnt/work/docker
           echo '{ "data-root": "/mnt/work/docker" }' | sudo tee /etc/docker/daemon.json
           sudo service docker restart || true
 
-      - name: Download package-cache
+          echo ">>> Space after setup"
+          df -h /
+          df -h /mnt
+
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update -y
+          #sudo apt install -y jq file python${{ matrix.python-version }}-dev python${{ matrix.python-version }}-pip
+
+      - name: Download package-cache from previous step
         uses: actions/download-artifact@v4
         with:
           name: package-cache
           path: package-cache
 
-      - name: Build Wheels
+      
+      - name: Check space usage before Wheel Build
         run: |
+          echo ">>> Before space usage"
+          df -h /
+          df -h /mnt
+
+
+      - name: Run build_wheels.sh
+        run: |
+          ls
+          echo "---------------------updated cache-----------------------"
+          ls package-cache
+          chmod +x package-cache/variable.sh
+          chmod +x package-cache/scanner-env.sh
           source package-cache/variable.sh
           source package-cache/scanner-env.sh
+          
+          #python${{ matrix.python-version }} -m pip install --upgrade pip setuptools wheel
+
           chmod +x ./gha-script/build_wheels.sh
           bash ./gha-script/build_wheels.sh
+          sudo apt update -y
+          sudo lsb_release -a 2>/dev/null || echo "lsb_release not available"
+          sudo uname -a
+          
         continue-on-error: ${{ matrix.allow-failure }}
 
-      - name: Upload wheel artifact
-        if: ${{ success() }}
-        run: |
-          if [ -n "${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}" ]; then
-            export gha_currency_service_id_api_key_dev=${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
-            chmod +x ./gha-script/upload-scripts/upload_wheel.sh
-            bash ./gha-script/upload-scripts/upload_wheel.sh *.whl
-          else
-            echo "API key not set, skipping wheel upload"
-          fi
 
-  ###########################################################################
-  # 4. SOURCE SCANNER
-  ###########################################################################
+      - name: Verify workspace is on /mnt
+        run: |
+          echo ">>> Current workspace: $GITHUB_WORKSPACE"
+          ls -ld $GITHUB_WORKSPACE
+          echo ">>> Where is workspace actually pointing?"
+          readlink -f $GITHUB_WORKSPACE
+          echo ">>> Disk usage of workspace:"
+          df -hT $GITHUB_WORKSPACE
+
+      - name: Check space usage after build wheel
+        run: |
+          echo ">>> Final space usage"
+          df -h /
+          df -h /mnt
+
+      - name: Upload wheel artifact using custom script
+        run: |
+          echo "--------------------- Staring if block ------------------------"
+          if [ -z "${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}" ]; then
+              echo "gha_currency_service_id_api_key_dev is empty or not set"
+          else
+              echo "--------------------- inside else block ------------------------"
+              # Print the length of the variable
+              echo "Length of gha_currency_service_id_api_key_dev is: ${#gha_currency_service_id_api_key_dev}"
+              export gha_currency_service_id_api_key_dev
+              WHEEL_FILE=*.whl
+              chmod +x ./gha-script/upload-scripts/upload_wheel.sh
+              bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
+          fi 
+        # continue-on-error: ${{ matrix.allow-failure }}
+
+      
   source_scanner:
     needs: build
     if: ${{ inputs.validate_build_script == 'true' }}
@@ -251,7 +461,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download updated-package-cache
+      - name: Download package-cache
         uses: actions/download-artifact@v4
         with:
           name: updated-package-cache
@@ -261,48 +471,48 @@ jobs:
         run: |
           source package-cache/variable.sh
           source package-cache/scanner-env.sh
+          echo "---------updated scanner-env.sh ----------------"
+          cat package-cache/scanner-env.sh
           chmod +x ./gha-script/scanner-scripts/${{ matrix.scanner }}_code_scan.sh
           bash ./gha-script/scanner-scripts/${{ matrix.scanner }}_code_scan.sh
+          
+          mkdir source_${{ matrix.scanner }}
+          mv package-cache/${{ matrix.scanner }}_source* source_${{ matrix.scanner }}
 
-          mkdir -p source_${{ matrix.scanner }}
-          mv package-cache/${{ matrix.scanner }}_source* source_${{ matrix.scanner }}/
-
-      - name: Upload scan results
+      - name: Upload ${{ matrix.scanner }} Scan Results
         uses: actions/upload-artifact@v4
         with:
           name: source-${{ matrix.scanner }}-results
           path: source_${{ matrix.scanner }}
 
-  ###########################################################################
-  # 5. UPLOAD SCANNER RESULTS
-  ###########################################################################
   upload_scanner_results:
-    needs: source_scanner
-    runs-on: ubuntu-24.04
+     needs: source_scanner
+     runs-on: ubuntu-24.04
+     steps:
+       - uses: actions/checkout@v4
+   
+       - name: Download all scan artifacts
+         uses: actions/download-artifact@v4
+         with:
+           path: all-scanner-results
 
-    steps:
-      - uses: actions/checkout@v4
+       - name: Download package-cache
+         uses: actions/download-artifact@v4
+         with:
+           name: package-cache
+           path: package-cache
+   
+       - name: Upload Scanner Results to COS
+         env:
+           gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+         run: |
+           export gha_currency_service_id_api_key_dev
+           mkdir -p source
 
-      - name: Download all scanner artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all-scanner-results
-
-      - name: Download package-cache
-        uses: actions/download-artifact@v4
-        with:
-          name: package-cache
-          path: package-cache
-
-      - name: Upload Combined Scanner Results to COS
-        env:
-          gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
-        run: |
-          export gha_currency_service_id_api_key_dev
-          mkdir -p source
-          source package-cache/variable.sh
-          source package-cache/scanner-env.sh
-          find all-scanner-results -type f -exec cp {} source/ \;
-          tar czf source_scanner.tar.gz source
-          chmod +x ./gha-script/upload-scripts/upload_file.sh
-          bash ./gha-script/upload-scripts/upload_file.sh source_scanner.tar.gz
+           source package-cache/variable.sh
+           source package-cache/scanner-env.sh
+           find all-scanner-results -type f -exec cp {} source/ \;
+  
+           tar cvzf source_scanner.tar.gz source
+           chmod +x ./gha-script/upload-scripts/upload_file.sh
+           bash ./gha-script/upload-scripts/upload_file.sh source_scanner.tar.gz
