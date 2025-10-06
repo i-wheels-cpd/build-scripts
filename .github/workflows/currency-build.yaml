@@ -189,10 +189,16 @@ jobs:
           chmod +x ./gha-script/build_package.sh
           bash ./gha-script/build_package.sh
 
+          echo ">>> Checking root-owned files before mv"
+          sudo find . -user root -type d || echo "No root-owned dirs found"
+
           # Fix permissions before moving
           echo ">>> Fixing permissions before mv"
-          sudo chown -R $USER:$USER package-cache
-          sudo chmod -R u+rwX,go+rX,go-w package-cache
+          sudo chown -R $USER:$USER .
+          sudo chmod -R u+rwX,go+rX,go-w .
+
+          echo ">>> Checking root-owned files after mv"
+          sudo find . -user root -type d || echo "No root-owned dirs found"
 
           cloned_package=$(ls -td -- */ | head -n 1)
           mv "$cloned_package" package-cache
