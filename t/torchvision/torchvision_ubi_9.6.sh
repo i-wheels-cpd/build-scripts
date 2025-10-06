@@ -197,7 +197,6 @@ fi
 export PLATFORM=$(uname -m)
 build_opts+=(BINARY="64")
 build_opts+=(DYNAMIC_ARCH=1)
-build_opts+=(TARGET="POWER9")
 BUILD_BFLOAT16=1
 # Placeholder for future builds that may include ILP64 variants.
 build_opts+=(INTERFACE64=0)
