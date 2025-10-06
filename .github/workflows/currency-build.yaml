@@ -104,8 +104,8 @@ jobs:
           cat scanner-env.sh
           echo "=========================="
           echo "Moving scanner-env.sh and variable.sh into package-cache............"
-          sudo mv variable.sh package-cache
-          sudo mv scanner-env.sh package-cache
+          mv variable.sh package-cache
+          mv scanner-env.sh package-cache
           echo "Moved scanner-env.sh and variable.sh into package-cache............"
 
 
