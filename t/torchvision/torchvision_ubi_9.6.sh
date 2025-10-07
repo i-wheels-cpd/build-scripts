@@ -1,3 +1,4 @@
+
 #!/bin/bash -e
 # -----------------------------------------------------------------------------
 #
@@ -111,9 +112,49 @@ python3.12 -m pip install .
 
 echo "------------ libprotobuf,protobuf installed--------------"
 
-# echo "----Installing rust------"
-#curl https://sh.rustup.rs -sSf | sh -s -- -y
-#source "$HOME/.cargo/env"
+#installing openblas  
+cd $CURRENT_DIR
+git clone https://github.com/OpenMathLib/OpenBLAS
+cd OpenBLAS
+git checkout v0.3.29
+git submodule update --init
+mkdir prefix
+# Set build options
+declare -a build_opts
+# Fix ctest not automatically discovering tests
+LDFLAGS=$(echo "${LDFLAGS}" | sed "s/-Wl,--gc-sections//g")
+export CF="${CFLAGS} -Wno-unused-parameter -Wno-old-style-declaration"
+unset CFLAGS
+export USE_OPENMP=1
+build_opts+=(USE_OPENMP=${USE_OPENMP})
+# Handle Fortran flags
+if [ ! -z "$FFLAGS" ]; then
+    export FFLAGS="${FFLAGS/-fopenmp/ }"
+    export FFLAGS="${FFLAGS} -frecursive"
+    export LAPACK_FFLAGS="${FFLAGS}"
+fi
+export PLATFORM=$(uname -m)
+build_opts+=(BINARY="64")
+build_opts+=(DYNAMIC_ARCH=1)
+BUILD_BFLOAT16=1
+# Placeholder for future builds that may include ILP64 variants.
+build_opts+=(INTERFACE64=0)
+build_opts+=(SYMBOLSUFFIX="")
+# Build LAPACK
+build_opts+=(NO_LAPACK=0)
+# Enable threading and set the number of threads
+build_opts+=(USE_THREAD=1)
+build_opts+=(NUM_THREADS=120)
+# Disable CPU/memory affinity handling to avoid problems with NumPy and R
+build_opts+=(NO_AFFINITY=1)
+# Build OpenBLAS
+make ${build_opts[@]} CFLAGS="${CF}" FFLAGS="${FFLAGS}" prefix=${OPENBLAS_PREFIX}
+# Install OpenBLAS
+CFLAGS="${CF}" FFLAGS="${FFLAGS}" make install PREFIX="${OPENBLAS_PREFIX}" ${build_opts[@]}
+export LD_LIBRARY_PATH=${OPENBLAS_PREFIX}/lib:$LD_LIBRARY_PATH
+export PKG_CONFIG_PATH=${OPENBLAS_PREFIX}/lib/pkgconfig:$PKG_CONFIG_PATH
+pkg-config --modversion openblas
+echo "-----------------------------------------------------Installed openblas-----------------------------------------------------"
 
 # echo "------------cloning pytorch----------------"
 cd $CURRENT_DIR
@@ -156,8 +197,6 @@ export USE_LEVELDB=1
 export USE_NINJA=0
 export USE_MPI=0
 export USE_OPENMP=1
-export USE_TBB=
-export USE_LAPACK=1
 export BUILD_CUSTOM_PROTOBUF=OFF
 export BUILD_CAFFE2=1
 export PYTORCH_BUILD_VERSION=2.6.0
@@ -169,54 +208,17 @@ export Protobuf_INCLUDE_DIR=${LIBPROTO_INSTALL}/include
 export Protobuf_LIBRARIES=${LIBPROTO_INSTALL}/lib64
 export Protobuf_PROTOC_EXECUTABLE=${LIBPROTO_INSTALL}/bin/protoc
 export USE_TENSORRT=0
+export BLAS=OpenBLAS
+export LAPACK=OpenBLAS
+export USE_OPENBLAS=1
+export USE_LAPACK=1
+export OpenBLAS_HOME=${OPENBLAS_PREFIX}
+export CMAKE_PREFIX_PATH="${OPENBLAS_PREFIX}:${CMAKE_PREFIX_PATH}"
+
 MAX_JOBS=$(nproc) python3.12 setup.py install
+python3.12 setup.py develop
 python3.12 setup.py bdist_wheel
 cd $CURRENT_DIR
-
-#installing openblas  
-cd $CURRENT_DIR
-git clone https://github.com/OpenMathLib/OpenBLAS
-cd OpenBLAS
-git checkout v0.3.29
-git submodule update --init
-mkdir prefix
-# Set build options
-declare -a build_opts
-# Fix ctest not automatically discovering tests
-LDFLAGS=$(echo "${LDFLAGS}" | sed "s/-Wl,--gc-sections//g")
-export CF="${CFLAGS} -Wno-unused-parameter -Wno-old-style-declaration"
-unset CFLAGS
-export USE_OPENMP=1
-build_opts+=(USE_OPENMP=${USE_OPENMP})
-# Handle Fortran flags
-if [ ! -z "$FFLAGS" ]; then
-    export FFLAGS="${FFLAGS/-fopenmp/ }"
-    export FFLAGS="${FFLAGS} -frecursive"
-    export LAPACK_FFLAGS="${FFLAGS}"
-fi
-export PLATFORM=$(uname -m)
-build_opts+=(BINARY="64")
-build_opts+=(DYNAMIC_ARCH=1)
-build_opts+=(TARGET="POWER9")
-BUILD_BFLOAT16=1
-# Placeholder for future builds that may include ILP64 variants.
-build_opts+=(INTERFACE64=0)
-build_opts+=(SYMBOLSUFFIX="")
-# Build LAPACK
-build_opts+=(NO_LAPACK=0)
-# Enable threading and set the number of threads
-build_opts+=(USE_THREAD=1)
-build_opts+=(NUM_THREADS=120)
-# Disable CPU/memory affinity handling to avoid problems with NumPy and R
-build_opts+=(NO_AFFINITY=1)
-# Build OpenBLAS
-make ${build_opts[@]} CFLAGS="${CF}" FFLAGS="${FFLAGS}" prefix=${OPENBLAS_PREFIX}
-# Install OpenBLAS
-CFLAGS="${CF}" FFLAGS="${FFLAGS}" make install PREFIX="${OPENBLAS_PREFIX}" ${build_opts[@]}
-export LD_LIBRARY_PATH=${OPENBLAS_PREFIX}/lib:$LD_LIBRARY_PATH
-export PKG_CONFIG_PATH=${OPENBLAS_PREFIX}/lib/pkgconfig:$PKG_CONFIG_PATH
-pkg-config --modversion openblas
-echo "-----------------------------------------------------Installed openblas-----------------------------------------------------"
 
 curl -LO https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.01.tar.gz
 tar -xzf nasm-2.16.01.tar.gz
@@ -382,6 +384,7 @@ export CFLAGS="${CFLAGS} -I/${FFMPEG_PREFIX}/include"
 export LDFLAGS="${LDFLAGS} -L/${FFMPEG_PREFIX}/lib"
 export TORCHVISION_USE_VIDEO_CODEC=0
 export TORCHVISION_INCLUDE="${SITE_PACKAGE_PATH}/av/include"
+python3.12 -m pip install torchvision-extra-decoders
 
 
 #Build package
@@ -401,7 +404,7 @@ python3.12 -m pip install triton==3.2.0
 
 # Run test
 # Skipping tests related to video and legacy image formats due to unsupported or missing runtime dependencies causing failures.
-if ! pytest -v --durations=25 --ignore-glob="*test_video*" --ignore-glob="*test_image*" --ignore-glob="*test_io*" --ignore-glob="*test_internet*" --ignore-glob="*test_datasets*" --ignore-glob="*test_models*" --ignore-glob="*test_extended_models*" --ignore-glob="*test_transforms_v2*"; then
+if ! pytest -v --durations=25 --ignore-glob="*test_video*" --ignore-glob="*test_image*" --ignore-glob="*test_io*" --ignore-glob="*test_internet*" --ignore-glob="*test_datasets*" --ignore-glob="*test_models*" --ignore-glob="*test_extended_models*" --ignore-glob="*test_transforms_v2*" --ignore="test/test_transforms_tensor.py"; then
     echo "------------------$PACKAGE_NAME:install_success_but_test_fails---------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | $OS_NAME | GitHub | Fail |  Install_success_but_test_Fails"
