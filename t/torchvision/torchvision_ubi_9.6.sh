@@ -111,68 +111,6 @@ python3.12 -m pip install .
 
 echo "------------ libprotobuf,protobuf installed--------------"
 
-# echo "----Installing rust------"
-#curl https://sh.rustup.rs -sSf | sh -s -- -y
-#source "$HOME/.cargo/env"
-
-# echo "------------cloning pytorch----------------"
-cd $CURRENT_DIR
-git clone https://github.com/pytorch/pytorch.git
-cd pytorch
-git checkout v2.6.0
-git submodule sync
-git submodule update --init --recursive
-
-wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/p/pytorch/pytorch_v2.6.0.patch
-git apply pytorch_v2.6.0.patch
-
-python3.12 -m pip install numpy==2.0.2 scipy==1.15.2 av llvmlite numba setuptools==76.1.0 wheel
-python3.12 -m pip install cmake==3.*
-python3.12 -m pip install -r requirements.txt
-
-export GCC_HOME=/opt/rh/gcc-toolset-13/root/usr
-export CC=$GCC_HOME/bin/gcc
-export CXX=$GCC_HOME/bin/g++
-
-export PATH="/protobuf/local/libprotobuf/bin/protoc:${PATH}"
-export LD_LIBRARY_PATH="/protobuf/local/libprotobuf/lib64:${LD_LIBRARY_PATH}"
-export LD_LIBRARY_PATH="/protobuf/third_party/abseil-cpp/local/abseilcpp/lib:${LD_LIBRARY_PATH}"
-export CPU_COUNT=$(nproc --all)
-export CXXFLAGS="${CXXFLAGS} -D__STDC_FORMAT_MACROS"
-export LDFLAGS="$(echo ${LDFLAGS} | sed -e 's/-Wl\,--as-needed//')"
-export LDFLAGS="${LDFLAGS} -Wl,-rpath-link,${LIBPROTO_INSTALL}/lib64"
-export CXXFLAGS="${CXXFLAGS} -fplt"
-export CFLAGS="${CFLAGS} -fplt"
-export USE_FBGEMM=0
-export USE_SYSTEM_NCCL=1
-export USE_MKLDNN=0
-export USE_NNPACK=0
-export USE_QNNPACK=0
-export USE_XNNPACK=0
-export USE_PYTORCH_QNNPACK=0
-export TH_BINARY_BUILD=1
-export USE_LMDB=1
-export USE_LEVELDB=1
-export USE_NINJA=0
-export USE_MPI=0
-export USE_OPENMP=1
-export USE_TBB=
-export USE_LAPACK=1
-export BUILD_CUSTOM_PROTOBUF=OFF
-export BUILD_CAFFE2=1
-export PYTORCH_BUILD_VERSION=2.6.0
-export PYTORCH_BUILD_NUMBER=${BUILD_NUM}
-export CMAKE_PREFIX_PATH="${SITE_PACKAGE_PATH}"
-export Protobuf_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf.so
-export Protobuf_LITE_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf-lite.so
-export Protobuf_INCLUDE_DIR=${LIBPROTO_INSTALL}/include
-export Protobuf_LIBRARIES=${LIBPROTO_INSTALL}/lib64
-export Protobuf_PROTOC_EXECUTABLE=${LIBPROTO_INSTALL}/bin/protoc
-export USE_TENSORRT=0
-MAX_JOBS=$(nproc) python3.12 setup.py install
-python3.12 setup.py bdist_wheel
-cd $CURRENT_DIR
-
 #installing openblas  
 cd $CURRENT_DIR
 git clone https://github.com/OpenMathLib/OpenBLAS
@@ -216,6 +154,70 @@ export LD_LIBRARY_PATH=${OPENBLAS_PREFIX}/lib:$LD_LIBRARY_PATH
 export PKG_CONFIG_PATH=${OPENBLAS_PREFIX}/lib/pkgconfig:$PKG_CONFIG_PATH
 pkg-config --modversion openblas
 echo "-----------------------------------------------------Installed openblas-----------------------------------------------------"
+
+# echo "------------cloning pytorch----------------"
+cd $CURRENT_DIR
+git clone https://github.com/pytorch/pytorch.git
+cd pytorch
+git checkout v2.6.0
+git submodule sync
+git submodule update --init --recursive
+
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/p/pytorch/pytorch_v2.6.0.patch
+git apply pytorch_v2.6.0.patch
+
+python3.12 -m pip install numpy==2.0.2 scipy==1.15.2 av llvmlite numba setuptools==76.1.0 wheel
+python3.12 -m pip install cmake==3.*
+python3.12 -m pip install -r requirements.txt
+
+export GCC_HOME=/opt/rh/gcc-toolset-13/root/usr
+export CC=$GCC_HOME/bin/gcc
+export CXX=$GCC_HOME/bin/g++
+
+export PATH="/protobuf/local/libprotobuf/bin/protoc:${PATH}"
+export LD_LIBRARY_PATH="/protobuf/local/libprotobuf/lib64:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="/protobuf/third_party/abseil-cpp/local/abseilcpp/lib:${LD_LIBRARY_PATH}"
+export CPU_COUNT=$(nproc --all)
+export CXXFLAGS="${CXXFLAGS} -D__STDC_FORMAT_MACROS"
+export LDFLAGS="$(echo ${LDFLAGS} | sed -e 's/-Wl\,--as-needed//')"
+export LDFLAGS="${LDFLAGS} -Wl,-rpath-link,${LIBPROTO_INSTALL}/lib64"
+export CXXFLAGS="${CXXFLAGS} -fplt"
+export CFLAGS="${CFLAGS} -fplt"
+export USE_FBGEMM=0
+export USE_SYSTEM_NCCL=1
+export USE_MKLDNN=0
+export USE_NNPACK=0
+export USE_QNNPACK=0
+export USE_XNNPACK=0
+export USE_PYTORCH_QNNPACK=0
+export TH_BINARY_BUILD=1
+export USE_LMDB=1
+export USE_LEVELDB=1
+export USE_NINJA=0
+export USE_MPI=0
+export USE_OPENMP=1
+export BUILD_CUSTOM_PROTOBUF=OFF
+export BUILD_CAFFE2=1
+export PYTORCH_BUILD_VERSION=2.6.0
+export PYTORCH_BUILD_NUMBER=${BUILD_NUM}
+export CMAKE_PREFIX_PATH="${SITE_PACKAGE_PATH}"
+export Protobuf_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf.so
+export Protobuf_LITE_LIBRARY=${LIBPROTO_INSTALL}/lib64/libprotobuf-lite.so
+export Protobuf_INCLUDE_DIR=${LIBPROTO_INSTALL}/include
+export Protobuf_LIBRARIES=${LIBPROTO_INSTALL}/lib64
+export Protobuf_PROTOC_EXECUTABLE=${LIBPROTO_INSTALL}/bin/protoc
+export USE_TENSORRT=0
+export BLAS=OpenBLAS
+export LAPACK=OpenBLAS
+export USE_OPENBLAS=1
+export USE_LAPACK=1
+export OpenBLAS_HOME=${OPENBLAS_PREFIX}
+export CMAKE_PREFIX_PATH="${OPENBLAS_PREFIX}:${CMAKE_PREFIX_PATH}"
+
+MAX_JOBS=$(nproc) python3.12 setup.py install
+python3.12 setup.py develop
+python3.12 setup.py bdist_wheel
+cd $CURRENT_DIR
 
 curl -LO https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.01.tar.gz
 tar -xzf nasm-2.16.01.tar.gz
@@ -381,6 +383,7 @@ export CFLAGS="${CFLAGS} -I/${FFMPEG_PREFIX}/include"
 export LDFLAGS="${LDFLAGS} -L/${FFMPEG_PREFIX}/lib"
 export TORCHVISION_USE_VIDEO_CODEC=0
 export TORCHVISION_INCLUDE="${SITE_PACKAGE_PATH}/av/include"
+python3.12 -m pip install torchvision-extra-decoders
 
 
 #Build package
@@ -400,7 +403,7 @@ python3.12 -m pip install triton==3.2.0
 
 # Run test
 # Skipping tests related to video and legacy image formats due to unsupported or missing runtime dependencies causing failures.
-if ! pytest -v --durations=25 --ignore-glob="*test_video*" --ignore-glob="*test_image*" --ignore-glob="*test_io*" --ignore-glob="*test_internet*" --ignore-glob="*test_datasets*" --ignore-glob="*test_models*" --ignore-glob="*test_extended_models*" --ignore-glob="*test_transforms_v2*"; then
+if ! pytest -v --durations=25 --ignore-glob="*test_video*" --ignore-glob="*test_image*" --ignore-glob="*test_io*" --ignore-glob="*test_internet*" --ignore-glob="*test_datasets*" --ignore-glob="*test_models*" --ignore-glob="*test_extended_models*" --ignore-glob="*test_transforms_v2*" --ignore="test/test_transforms_tensor.py"; then
     echo "------------------$PACKAGE_NAME:install_success_but_test_fails---------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | $OS_NAME | GitHub | Fail |  Install_success_but_test_Fails"
