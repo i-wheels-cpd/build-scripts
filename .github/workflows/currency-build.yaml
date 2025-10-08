@@ -141,7 +141,7 @@ jobs:
 
       - name: Setup extra storage on /mnt
         run: |
-          echo ">>> Using /mnt (74GB) for builds"
+          echo ">>> Using /mnt for builds"
           df -h /mnt
 
           # Create work dir with sudo
@@ -359,7 +359,7 @@ jobs:
 
       - name: Setup extra storage on /mnt
         run: |
-          echo ">>> Using /mnt (74GB) for builds"
+          echo ">>> Using /mnt for builds"
           df -h /mnt
 
           # Create work dir with sudo
