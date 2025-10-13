@@ -178,7 +178,7 @@ export PATH="/protobuf/local/libprotobuf/bin/protoc:${PATH}"
 export LD_LIBRARY_PATH="/protobuf/local/libprotobuf/lib64:${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH="/protobuf/third_party/abseil-cpp/local/abseilcpp/lib:${LD_LIBRARY_PATH}"
 #export CPU_COUNT=$(nproc --all)
-export CPU_COUNT=4
+export CPU_COUNT=2
 export CXXFLAGS="${CXXFLAGS} -D__STDC_FORMAT_MACROS"
 export LDFLAGS="$(echo ${LDFLAGS} | sed -e 's/-Wl\,--as-needed//')"
 export LDFLAGS="${LDFLAGS} -Wl,-rpath-link,${LIBPROTO_INSTALL}/lib64"
@@ -216,7 +216,7 @@ export OpenBLAS_HOME=${OPENBLAS_PREFIX}
 export CMAKE_PREFIX_PATH="${OPENBLAS_PREFIX}:${CMAKE_PREFIX_PATH}"
 
 #MAX_JOBS=$(nproc) python3.12 setup.py install
-MAX_JOBS=4 python3.12 setup.py install
+MAX_JOBS=2 python3.12 setup.py install
 python3.12 setup.py develop
 python3.12 setup.py bdist_wheel
 cd $CURRENT_DIR
@@ -226,7 +226,7 @@ tar -xzf nasm-2.16.01.tar.gz
 cd nasm-2.16.01
 ./configure
 #make -j$(nproc)
-make -j4
+make -j2
 make install
 nasm -v
 cd $CURRENT_DIR
