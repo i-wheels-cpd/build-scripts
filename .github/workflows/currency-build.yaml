@@ -1,3 +1,4 @@
+
 name: Currency Build
 
 on:
@@ -313,10 +314,11 @@ jobs:
            chmod +x ./gha-script/upload-scripts/upload_file.sh
            bash ./gha-script/upload-scripts/upload_file.sh source_scanner.tar.gz
 
+
   final_summary:
       name: Final Summary Stage
-      needs: [build, source_scanner]
-      runs-on: ubuntu-24.04-ppc64le-p10
+      needs: [build, source_scanner,  upload_scanner_results]
+      runs-on: ubuntu-24.04
       if: always()
       steps:
         - name: Checkout code
