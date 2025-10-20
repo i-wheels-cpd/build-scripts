@@ -359,6 +359,6 @@ jobs:
                 pwd
                 chmod +x process_bom/*.py || true
                 # Export environment variables
-                export PYTHONPATH="/tmp/_actions-runner-working-dir/build-scripts/build-scripts:/tmp/_actions-runner-working-dir/build-scripts/build-scripts/process_bom"
+                export PYTHONPATH="/home/runner/work/build-scripts/build-scripts:/home/runner/work/build-scripts/build-scripts/process_bom"
                 python -m process_bom.run_currency_processor
 
