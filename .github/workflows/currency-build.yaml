@@ -174,7 +174,7 @@ jobs:
     needs: build_info
     name: Create Wheel for Python ${{ matrix.python-version }}
     if: ${{ inputs.wheel_build == 'true' }}
-    runs-on: ubuntu-24.04-ppc64le-p10
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -265,7 +265,7 @@ jobs:
   collect_wheels:
     name: Collect All Wheels
     needs: wheel_build
-    runs-on: ubuntu-24.04-ppc64le-p10
+    runs-on: ubuntu-24.04
     steps:
       - name: Download all wheel artifacts
         uses: actions/download-artifact@v4
@@ -303,7 +303,7 @@ jobs:
 
   wheel_scanner:
     needs: collect_wheels
-    runs-on: ubuntu-24.04-ppc64le-p10
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
