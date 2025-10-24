@@ -170,6 +170,137 @@ jobs:
           name: updated-package-cache
           path: package-cache
 
+  wheel_build:
+    needs: build_info
+    name: Create Wheel for Python ${{ matrix.python-version }}
+    if: ${{ inputs.wheel_build == 'true' }}
+    runs-on: ubuntu-24.04-ppc64le-p10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.9"
+            allow-failure: true
+          - python-version: "3.10"
+            allow-failure: false
+          - python-version: "3.11"
+            allow-failure: false
+          - python-version: "3.12"
+            allow-failure: false
+          - python-version: "3.13"
+            allow-failure: true
+    env:
+      GHA_CURRENCY_SERVICE_ID_API_KEY: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY }}
+      PYTHON_VERSION: ${{ matrix.python-version }}
+      PACKAGE_NAME: ${{ inputs.package_name }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update -y
+          #sudo apt install -y jq file python${{ matrix.python-version }}-dev python${{ matrix.python-version }}-pip
+
+      - name: Download package-cache from previous step
+        uses: actions/download-artifact@v4
+        with:
+          name: package-cache
+          path: package-cache
+
+      - name: Run build_wheels.sh
+        run: |
+          ls
+          echo "---------------------updated cache-----------------------"
+          ls package-cache
+          chmod +x package-cache/variable.sh
+          chmod +x package-cache/scanner-env.sh
+          source package-cache/variable.sh
+          source package-cache/scanner-env.sh
+          
+          #python${{ matrix.python-version }} -m pip install --upgrade pip setuptools wheel
+
+          chmod +x ./gha-script/build_wheels.sh
+          bash ./gha-script/build_wheels.sh
+          sudo apt update -y
+          sudo lsb_release -a 2>/dev/null || echo "lsb_release not available"
+          sudo uname -a
+          
+        continue-on-error: ${{ matrix.allow-failure }}
+
+
+      - name: Move wheel into package-cache
+        run: |
+          mkdir -p package-cache/wheels
+          # Ensure permissions are correct
+          sudo chown -R $USER:$USER .
+          chmod -R u+rw .
+          find . -name "*.whl" -exec cp {} package-cache/wheels/ \;
+          echo "Wheels moved to package-cache/wheels"
+          echo "========= ls package-cache ========="
+          ls package-cache
+          echo "+++++++++++++++++++++++++++++++++++"
+          ls package-cache/wheels
+          echo "==================================" 
+          ls -lh package-cache/wheels
+
+       
+
+      - name: Upload wheel package-cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.python-version }}
+          path: package-cache/wheels/*.whl
+
+
+      - name: Upload wheel artifact using custom script
+        run: |
+          sudo chmod a+r *.whl
+          WHEEL_FILE=*.whl
+          chmod +x ./gha-script/upload-scripts/upload_wheel.sh
+          bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
+        continue-on-error: ${{ matrix.allow-failure }}
+
+  collect_wheels:
+    name: Collect All Wheels
+    needs: wheel_build
+    runs-on: ubuntu-24.04-ppc64le-p10
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-wheels
+
+      - name: Download package-cache from previous step
+        uses: actions/download-artifact@v4
+        with:
+          name: package-cache
+          path: package-cache
+
+      
+      - name: Move only main package wheels into package-cache/wheels
+        run: |
+          chmod +x package-cache/variable.sh
+          chmod +x package-cache/scanner-env.sh
+          source package-cache/variable.sh
+          source package-cache/scanner-env.sh
+          mkdir -p package-cache/wheels
+          echo "Copying wheels starting with package name: $PACKAGE_NAME"
+          # Convert PACKAGE_NAME to lowercase and store in a new variable
+          PACKAGE_NAME_LC=$(echo "$PACKAGE_NAME" | tr '[:upper:]' '[:lower:]')
+          find all-wheels -type f -name "${PACKAGE_NAME_LC}*.whl" -exec cp {} package-cache/wheels/ \;
+
+
+          echo "Final wheel contents for package: $PACKAGE_NAME"
+          ls -lh package-cache/wheels
+
+      - name: Upload consolidated package-cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-cache-consolidated
+          path: package-cache
+
   wheel_scanner:
     needs: collect_wheels
     runs-on: ubuntu-24.04-ppc64le-p10
