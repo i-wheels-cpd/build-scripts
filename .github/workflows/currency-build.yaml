@@ -121,7 +121,7 @@ jobs:
        
       - name: Build Package
         env:
-          gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
+          gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
         run: |
           export gha_currency_service_id_api_key_dev
           echo "Sourcing variable.sh and scanner-env.sh..........................................."
@@ -170,80 +170,59 @@ jobs:
           name: updated-package-cache
           path: package-cache
 
-  wheel_build:
-    needs: build_info
-    name: Create Wheel for Python ${{ matrix.python-version }}
-    if: ${{ inputs.wheel_build == 'true' }}
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - python-version: "3.9"
-            allow-failure: true
-          - python-version: "3.10"
-            allow-failure: false
-          - python-version: "3.11"
-            allow-failure: false
-          - python-version: "3.12"
-            allow-failure: false
-          - python-version: "3.13"
-            allow-failure: true
-    env:
-      gha_currency_service_id_api_key_dev: ${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}
-      PYTHON_VERSION: ${{ matrix.python-version }}
-      PACKAGE_NAME: ${{ inputs.package_name }}
-      VERSION: ${{ inputs.version }}
+  wheel_scanner:
+    needs: collect_wheels
+    runs-on: ubuntu-24.04-ppc64le-p10
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install system dependencies
-        run: |
-          sudo apt update -y
-          #sudo apt install -y jq file python${{ matrix.python-version }}-dev python${{ matrix.python-version }}-pip
-
-      - name: Download package-cache from previous step
+      - name: Download consolidated package-cache
         uses: actions/download-artifact@v4
         with:
-          name: package-cache
+          name: package-cache-consolidated
           path: package-cache
 
-      - name: Run build_wheels.sh
+      - name: List wheels in package-cache
         run: |
+          echo "Verifying contents of package-cache/wheels/"
+          ls -lh package-cache/wheels
+          echo "Done listing all wheels."
+
+      - name: Run ScanCode Toolkit on Wheels
+        run: |
+            source package-cache/variable.sh
+            source package-cache/scanner-env.sh
+            chmod +x ./gha-script/scanner-scripts/scancode_wheel_scan.sh
+            bash ./gha-script/scanner-scripts/scancode_wheel_scan.sh
+            echo "-------------------------Wheels inside package-cache/wheels-----------------------------------------"
+            ls package-cache/wheels
+            echo "------------------------------------------------------------------"
+
+      - name: Collect wheel scan outputs
+        run: |
+          mkdir -p wheel_scancode
+          echo "Looking for *_output.json files in package-cache/wheels/"
+          find package-cache/wheels -type f -name "*_output.json" -exec mv {} wheel_scancode/ \;
+
+          echo "Contents to be zipped:"
+          ls -lh wheel_scancode
+
+          echo "Creating wheel_scanner.tar.gz"
+          tar -czf wheel_scanner.tar.gz wheel_scancode
+          echo "-------------------------------------"
           ls
-          echo "---------------------updated cache-----------------------"
-          ls package-cache
-          chmod +x package-cache/variable.sh
-          chmod +x package-cache/scanner-env.sh
-          source package-cache/variable.sh
-          source package-cache/scanner-env.sh
-          
-          #python${{ matrix.python-version }} -m pip install --upgrade pip setuptools wheel
+          echo "-------------------------------------"
 
-          chmod +x ./gha-script/build_wheels.sh
-          bash ./gha-script/build_wheels.sh
-          sudo apt update -y
-          sudo lsb_release -a 2>/dev/null || echo "lsb_release not available"
-          sudo uname -a
-          
-        continue-on-error: ${{ matrix.allow-failure }}
-
-      - name: Upload wheel artifact using custom script
+      - name: Upload Wheel Scanner Results
+        env:
+           gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
         run: |
-          echo "--------------------- Staring if block ------------------------"
-          if [ -z "${{ secrets.GHA_CURRENCY_SERVICE_ID_API_KEY_DEV }}" ]; then
-              echo "gha_currency_service_id_api_key_dev is empty or not set"
-          else
-              echo "--------------------- inside else block ------------------------"
-              # Print the length of the variable
-              echo "Length of gha_currency_service_id_api_key_dev is: ${#gha_currency_service_id_api_key_dev}"
-              export gha_currency_service_id_api_key_dev
-              WHEEL_FILE=*.whl
-              chmod +x ./gha-script/upload-scripts/upload_wheel.sh
-              bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
-          fi 
-        # continue-on-error: ${{ matrix.allow-failure }}
+            source package-cache/variable.sh
+            source package-cache/scanner-env.sh
+            tar cvzf wheel_scanner.tar.gz wheel_scancode
+            chmod +x ./gha-script/upload-scripts/upload_file.sh
+            bash ./gha-script/upload-scripts/upload_file.sh wheel_scanner.tar.gz
+
 
       
   source_scanner:
@@ -319,7 +298,6 @@ jobs:
       name: Final Summary Stage
       needs: [build, source_scanner,  upload_scanner_results]
       runs-on: ubuntu-24.04
-      if: always()
       steps:
         - name: Checkout code
           uses: actions/checkout@v4
