@@ -255,11 +255,15 @@ jobs:
 
 
       - name: Upload wheel artifact using custom script
+        env:
+           GHA_CURRENCY_SERVICE_ID_X86_API_KEY: ${{ secrets.GHA_CURRENCY_SERVICE_ID_X86_API_KEY}}
         run: |
-          sudo chmod a+r *.whl
-          WHEEL_FILE=*.whl
-          chmod +x ./gha-script/upload-scripts/upload_wheel.sh
-          bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
+            source package-cache/variable.sh
+            source package-cache/scanner-env.sh
+            sudo chmod a+r *.whl
+            WHEEL_FILE=*.whl
+            chmod +x ./gha-script/upload-scripts/upload_wheel.sh
+            bash ./gha-script/upload-scripts/upload_wheel.sh $WHEEL_FILE
         continue-on-error: ${{ matrix.allow-failure }}
 
   collect_wheels:
