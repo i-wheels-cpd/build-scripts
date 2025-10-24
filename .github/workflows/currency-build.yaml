@@ -121,9 +121,9 @@ jobs:
        
       - name: Build Package
         env:
-          gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+          GHA_CURRENCY_SERVICE_ID_X86_API_KEY: ${{ secrets.GHA_CURRENCY_SERVICE_ID_X86_API_KEY}}
         run: |
-          export gha_currency_service_id_api_key_dev
+          export GHA_CURRENCY_SERVICE_ID_X86_API_KEY
           echo "Sourcing variable.sh and scanner-env.sh..........................................."
           source package-cache/variable.sh
           source package-cache/scanner-env.sh
@@ -346,7 +346,7 @@ jobs:
 
       - name: Upload Wheel Scanner Results
         env:
-           gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+           GHA_CURRENCY_SERVICE_ID_X86_API_KEY: ${{ secrets.GHA_CURRENCY_SERVICE_ID_X86_API_KEY}}
         run: |
             source package-cache/variable.sh
             source package-cache/scanner-env.sh
@@ -411,9 +411,9 @@ jobs:
    
        - name: Upload Scanner Results to COS
          env:
-           gha_currency_service_id_api_key_dev: ${{ secrets.gha_currency_service_id_api_key_dev }}
+           GHA_CURRENCY_SERVICE_ID_X86_API_KEY: ${{ secrets.GHA_CURRENCY_SERVICE_ID_X86_API_KEY}}
          run: |
-           export gha_currency_service_id_api_key_dev
+           export GHA_CURRENCY_SERVICE_ID_X86_API_KEY
            mkdir -p source
 
            source package-cache/variable.sh
