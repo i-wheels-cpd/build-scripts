@@ -10,6 +10,7 @@
   "build_script": "gensim_ubi_9.6.sh",
   "docker_build": false,
   "validate_build_script": true,
+  "required_versions": {"Releases": ["*"], "Tags": ["4.3.3"]},
   "use_non_root_user": false,
   "*": {
      "build_script":"gensim_ubi_9.6.sh"
