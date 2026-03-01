@@ -25,6 +25,7 @@ PACKAGE_DIR=gensim
 
 CURRENT_DIR=${PWD}
 
+
 yum install -y git make cmake zip tar wget python3.12 python3.12-devel python3.12-pip gcc-toolset-13 gcc-toolset-13-gcc-c++ gcc-toolset-13-gcc zlib-devel libjpeg-devel openssl openssl-devel freetype-devel pkgconfig
 
 source /opt/rh/gcc-toolset-13/enable
