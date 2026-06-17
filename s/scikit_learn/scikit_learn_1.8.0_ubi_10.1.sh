@@ -2,9 +2,9 @@
 # -----------------------------------------------------------------------------
 #
 # Package       : scikit-learn
-# Version       : 1.7.0
+# Version       : 1.8.0
 # Source repo   : https://github.com/scikit-learn/scikit-learn.git
-# Tested on     : UBI 9.3
+# Tested on     : UBI 10.1
 # Language      : Python, Cython, C++
 # Ci-Check  : True
 # Script License: Apache License 2.0
