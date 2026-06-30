@@ -89,9 +89,10 @@ git checkout $PACKAGE_VERSION
 git submodule sync
 git submodule update --init --recursive
 
-#wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/p/pytorch/pytorch_v2.6.0.patch
-git apply /home/pytorch_v2.11.0.patch
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/p/pytorch/pytorch_v2.11.0.patch
+git apply pytorch_v2.11.0.patch
 
+sed -i 's/return {impl_->list\.begin() + static_cast<typename decltype(impl_->list)::difference_type>(pos)};/return internal_reference_type(impl_->list.begin() + static_cast<std::ptrdiff_t>(pos));/g' aten/src/ATen/core/List_inl.h
 python3.12 -m pip install numpy==2.2.6 scipy==1.17.1
 python3.12 -m pip install cmake==3.*
 python3.12 -m pip install -r requirements.txt
@@ -101,6 +102,10 @@ export PATH="/protobuf/local/libprotobuf/bin/protoc:${PATH}"
 export LD_LIBRARY_PATH="/protobuf/local/libprotobuf/lib64:${LD_LIBRARY_PATH}"
 #export LD_LIBRARY_PATH="/protobuf/third_party/abseil-cpp/local/abseilcpp/lib:${LD_LIBRARY_PATH}"
 export CPU_COUNT=$(nproc --all)
+# Limit parallel jobs to avoid OOM during CUDA build
+# Use at most 4 jobs or half of available cores, whichever is smaller
+export MAX_JOBS=4
+echo "Building with MAX_JOBS=${MAX_JOBS} to avoid OOM (total cores: ${CPU_COUNT})"
 export CXXFLAGS="${CXXFLAGS} -D__STDC_FORMAT_MACROS"
 export LDFLAGS="$(echo ${LDFLAGS} | sed -e 's/-Wl\,--as-needed//')"
 export LDFLAGS="${LDFLAGS} -Wl,-rpath-link,${LIBPROTO_INSTALL}/lib64"
@@ -134,17 +139,42 @@ export PYTORCH_BUILD_NUMBER=1
 
 #cuda
 if [ "$build_type" == "cuda" ]; then
+  # Set CUDA_HOME for CUDA 13.2 in NVIDIA Docker image
+  export CUDA_HOME=/usr/local/cuda
+  export PATH=${CUDA_HOME}/bin:${PATH}
+  export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+  
+  # Verify nvcc exists
+  if [ ! -f "${CUDA_HOME}/bin/nvcc" ]; then
+    echo "ERROR: nvcc not found at ${CUDA_HOME}/bin/nvcc"
+    echo "Checking for CUDA installation..."
+    ls -la /usr/local/ | grep cuda || true
+    exit 1
+  fi
+  
+  echo "CUDA_HOME set to: ${CUDA_HOME}"
+  echo "nvcc location: ${CUDA_HOME}/bin/nvcc"
+  ${CUDA_HOME}/bin/nvcc --version
+  
   export USE_CUDA=1
   export USE_CUDNN=1
+  export USE_NCCL=1
+  export USE_SYSTEM_NCCL=0
   export CMAKE_CUDA_HOST_COMPILER=$CC
   export CMAKE_CUDA_COMPILER=${CUDA_HOME}/bin/nvcc
+  export CUDA_NVCC_EXECUTABLE=${CUDA_HOME}/bin/nvcc
   export CXXFLAGS="${CXXFLAGS} -I${CUDA_HOME}/include"
-  export TORCH_CUDA_ARCH_LIST="6.0;7.0;7.5;8.0;8.6;9.0"
+  export LDFLAGS="${LDFLAGS} -L${CUDA_HOME}/lib64"
+  # Reduce CUDA architectures to save memory during build
+  # Only build for common architectures - add more if needed for your specific GPU
+  export TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6"
+  echo "Building for CUDA architectures: ${TORCH_CUDA_ARCH_LIST}"
 fi
 
 
 #Build package
-if ! (MAX_JOBS=${CPU_COUNT} python3.12 setup.py bdist_wheel) ; then
+# Use the limited MAX_JOBS to prevent OOM
+if ! (python3.12 setup.py bdist_wheel) ; then
     echo "------------------$PACKAGE_NAME:install_fails-------------------------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_Fails"
