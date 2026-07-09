@@ -22,7 +22,8 @@ set -ex
 
 # Package configuration
 PACKAGE_NAME=xgboost
-PACKAGE_VERSION=${1:-v3.2.0}
+PACKAGE_VERSION="v3.2.0"
+BUILD_TYPE=${1:-cpu}     # cpu | cuda
 PACKAGE_URL=https://github.com/dmlc/xgboost
 PACKAGE_DIR=xgboost/python-package
 
@@ -51,22 +52,42 @@ pip3.12 install pytest hypothesis pandas matplotlib pyarrow dask modin shap  pys
 # Clone XGBoost source repository
 echo "Cloning the repository..."
 mkdir -p output
-git clone $PACKAGE_URL
+mkdir -p "${OUTPUT_FOLDER}"
+if [ ! -d "$PACKAGE_NAME" ]; then
+    git clone $PACKAGE_URL
+fi
 cd $PACKAGE_NAME/
 git checkout $PACKAGE_VERSION
 git submodule update --init
 export SRC_DIR=$(pwd)
 echo "SRC_DIR: $SRC_DIR"
 
-#build xgboost cpp artifacts
-cd ${SCRIPT_DIR} && mkdir output && OUTPUT_FOLDER=$(pwd)
-cd ${SRC_DIR}
+# Build xgboost cpp artifacts
+cd "${SCRIPT_DIR}"
+
+cd "${SRC_DIR}"
 mkdir -p build
 cd build
 
-# Configure and build native components
-cmake -DCMAKE_INSTALL_PREFIX=${OUTPUT_FOLDER} ..
-make -j$(nproc)
+if [ "$BUILD_TYPE" = "cuda" ]; then
+    export CUDA_HOME=/usr/local/cuda
+    export PATH=$CUDA_HOME/bin:$PATH
+    export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+
+    # Configure and build native components
+    cmake \
+      -DCMAKE_INSTALL_PREFIX=${OUTPUT_FOLDER} \
+      -DCMAKE_CUDA_COMPILER=${CUDA_HOME}/bin/nvcc \
+      -DUSE_CUDA=ON \
+      -DUSE_NCCL=OFF \
+      -DCMAKE_CUDA_ARCHITECTURES=80 \
+      ..
+else
+    cmake \
+        -DCMAKE_INSTALL_PREFIX=${OUTPUT_FOLDER} \
+        ..
+fi
+make VERBOSE=1 -j$(nproc)
 
 # Copy generated shared libraries, headers and binaries to output directory
 LIBDIR=${OUTPUT_FOLDER}/lib
@@ -87,8 +108,10 @@ echo "Building xgboost Python artifacts and wheel..."
 
 pushd ${SRC_DIR}/python-package
 
-# Remove NCCL dependency since it is not required for non-GPU/Power builds
-sed -i '/nvidia-nccl-cu12/d' pyproject.toml
+# CPU build doesn't need NCCL dependency
+if [ "$BUILD_TYPE" = "cpu" ]; then
+    sed -i '/nvidia-nccl-cu12/d' pyproject.toml
+fi
 
 python -m pip wheel -w ${OUTPUT_FOLDER} -v . --no-build-isolation --no-deps
 
@@ -139,3 +162,4 @@ else
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub  | Fail | Both_Install_and_Test_Success"
     exit 0
 fi
+
