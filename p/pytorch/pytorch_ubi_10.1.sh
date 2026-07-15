@@ -167,7 +167,7 @@ if [ "$build_type" == "cuda" ]; then
   export LDFLAGS="${LDFLAGS} -L${CUDA_HOME}/lib64"
   # Reduce CUDA architectures to save memory during build
   # Only build for common architectures - add more if needed for your specific GPU
-  export TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6"
+  export TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.7;8.9;9.0"
   echo "Building for CUDA architectures: ${TORCH_CUDA_ARCH_LIST}"
 fi
 
