@@ -74,13 +74,16 @@ if [ "$BUILD_TYPE" = "cuda" ]; then
     export PATH=$CUDA_HOME/bin:$PATH
     export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
+    # Supported GPU architectures
+    CUDA_LEVELS="75;80;86;89;90"
+
     # Configure and build native components
     cmake \
       -DCMAKE_INSTALL_PREFIX=${OUTPUT_FOLDER} \
       -DCMAKE_CUDA_COMPILER=${CUDA_HOME}/bin/nvcc \
       -DUSE_CUDA=ON \
       -DUSE_NCCL=OFF \
-      -DCMAKE_CUDA_ARCHITECTURES=80 \
+      -DCMAKE_CUDA_ARCHITECTURES="${CUDA_LEVELS}" \
       ..
 else
     cmake \
