@@ -6,10 +6,7 @@ EXTRA_ARGS="${@:3}" # Capture all additional arguments passed to the script
 CURRENT_DIR="${PWD}"
 EXIT_CODE=0
 
-#install gcc
-yum install -y gcc-toolset-13 zip unzip 
-source /opt/rh/gcc-toolset-13/enable
-gcc --version
+yum install -y zip unzip 
 
 # Temporary build script path
 if [ -n "$BUILD_SCRIPT_PATH" ]; then
