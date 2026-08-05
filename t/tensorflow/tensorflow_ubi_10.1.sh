@@ -8,7 +8,7 @@
 # Language         : Python
 # Travis-Check     : True
 # Script License   : Apache License, Version 2 or later
-# Maintainer       : Vibhav Dhaimode <Vibhav.Dhaimode3@ibm.com>
+# Maintainer       : Vibhav Dhaimode <Vibhav.Dhaimode4@ibm.com>
 #
 # Disclaimer       : This script has been tested in root mode on given
 # ==========         platform using the mentioned version of the package.
@@ -22,6 +22,8 @@ set -xe
 
 PACKAGE_NAME=tensorflow
 PACKAGE_VERSION=${1:-v2.21.0}
+BUILD_TYPE=${2:-cpu}
+CUDA_VERSION=${3:-13.0}
 PACKAGE_URL=https://github.com/tensorflow/tensorflow
 PACKAGE_DIR=tensorflow
 
@@ -305,6 +307,7 @@ echo " --------------------------------- H5py Installing -----------------------
 git clone https://github.com/h5py/h5py.git
 cd h5py/
 git checkout 3.14.0
+sed -i '/^license\s*=/d; /^license-files\s*=/d' pyproject.toml
 
 HDF5_DIR=${HDF5_PREFIX} python3.12 -m pip wheel -w dist -v . --no-build-isolation
 cp dist/h5py-3.14.0-cp312-cp312-linux_x86_64.whl ../wheels
@@ -338,6 +341,10 @@ echo "protobuf build starts!!"
 cd protobuf
 git submodule update --init --recursive
 rm -rf ./third_party/googletest | true
+
+#Apply patch
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/l/libprotobuf/0001-Fixed-CVE-2026-0994-for-protobuf-6.31.1.patch
+git apply 0001-Fixed-CVE-2026-0994-for-protobuf-6.31.1.patch
 
 mkdir build
 cd build
@@ -425,7 +432,7 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION_VERSION=2
 
 python3.12 -m pip install protobuf==6.31.1
 python3.12 -m pip download protobuf==6.31.1
-cp protobuf-6.31.1-cp39-abi3-manylinux2014_x86_64.whl wheels 
+cp protobuf-6.31.1-cp39-abi3-manylinux2014_x86_64.whl wheels
 
 python3.12 -m pip install pybind11==3.0.4
 PYBIND11_PREFIX=${VIRTUAL_ENV}/lib/python3.12/site-packages/pybind11
@@ -487,16 +494,63 @@ export CC=/usr/bin/clang
 export CXX=/usr/bin/clang++
 
 git clone -b $PACKAGE_VERSION $PACKAGE_URL
-cd tensorflow
+cd ${PACKAGE_DIR}
 SRC_DIR=$(pwd)
 
 #Apply patch
-wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/t/tensorflow/tf_2.21.0_fix.patch
-git apply tf_2.21.0_fix.patch
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/t/tensorflow/new-patches/cuda-13.patch
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/t/tensorflow/new-patches/pin-deps.patch
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/t/tensorflow/new-patches/dynamic-partitions-cuda-iterator.patch
+git apply cuda-13.patch
+git apply pin-deps.patch
+git apply dynamic-partitions-cuda-iterator.patch
 
 
 #Build the bazelrc
-cat <<EOF > ".tf_configure_bazelrc"
+if [ "${BUILD_TYPE}" == "cuda" ]; then
+    cat <<EOF > ".tf_configure_bazelrc"
+build --action_env PYTHON_BIN_PATH="${VIRTUAL_ENV}/bin/python"
+build --action_env PYTHON_LIB_PATH="${VIRTUAL_ENV}/lib/python3.12/site-packages"
+build --python_path="${VIRTUAL_ENV}/bin/python3"
+build:cuda --repo_env HERMETIC_CUDA_VERSION="${CUDA_VERSION}"
+build:cuda --repo_env HERMETIC_CUDNN_VERSION="9.16.0"
+build:cuda --repo_env HERMETIC_NCCL_VERSION="2.29.2"
+build:cuda --repo_env HERMETIC_NVSHMEM_VERSION="3.3.20"
+build:cuda --repo_env HERMETIC_CUDA_COMPUTE_CAPABILITIES="9.0,8.9,8.6,8.0,7.5"
+build:cuda --repo_env LOCAL_CUDA_PATH="/usr/local/cuda-${CUDA_VERSION}"
+build:cuda --repo_env LOCAL_CUDA_PATHS="/usr/local/cuda-${CUDA_VERSION},/usr/local/cuda-${CUDA_VERSION}/targets/x86_64-linux"
+build --action_env LD_LIBRARY_PATH="/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda-${CUDA_VERSION}/lib64:/usr/local/cuda-${CUDA_VERSION}/targets/x86_64-linux/lib"
+build --repo_env TF_CUDA_PATHS="/usr/local/cuda-${CUDA_VERSION},/usr/local/cuda-${CUDA_VERSION}/targets/x86_64-linux"
+build --action_env TF_CUDA_PATHS="/usr/local/cuda-${CUDA_VERSION},/usr/local/cuda-${CUDA_VERSION}/targets/x86_64-linux"
+build --config=cuda_nvcc
+build --@local_config_cuda//cuda:override_include_cuda_libs=true
+build --config=hermetic_cuda_umd
+build --action_env CLANG_CUDA_COMPILER_PATH="/usr/bin/clang-21"
+build --linkopt=-L/usr/local/cuda-${CUDA_VERSION}/lib64
+build --linkopt=-lcudart
+build --linkopt=-lcufft
+build --linkopt=-lcublas
+build --linkopt=-lcublasLt
+build --linkopt=-lnvJitLink
+build --linkopt=-lcusparse
+build --host_linkopt=-L/usr/local/cuda-${CUDA_VERSION}/lib64
+build --host_linkopt=-lcudart
+build --host_linkopt=-lcufft
+build --host_linkopt=-lcublas
+build --host_linkopt=-lcublasLt
+build --host_linkopt=-lnvJitLink
+build --host_linkopt=-lcusparse
+build:opt --copt=-Wno-sign-compare
+build:opt --host_copt=-Wno-sign-compare
+test --test_size_filters=small,medium
+test --test_env=LD_LIBRARY_PATH
+test:v1 --test_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu,-oss_serial
+test:v1 --build_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu
+test:v2 --test_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu,-oss_serial,-v1only
+test:v2 --build_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu,-v1only
+EOF
+else
+    cat <<EOF > ".tf_configure_bazelrc"
 build --action_env PYTHON_BIN_PATH="${VIRTUAL_ENV}/bin/python"
 build --action_env PYTHON_LIB_PATH="${VIRTUAL_ENV}/lib/python3.12/site-packages"
 build --python_path="${VIRTUAL_ENV}/bin/python"
@@ -511,6 +565,7 @@ test:v1 --build_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-gpu
 test:v2 --test_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-gpu,-oss_serial,-v1only
 test:v2 --build_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-gpu,-v1only
 EOF
+fi
 
 BAZEL_JOBS="32"
 HOST_CPUS=$(nproc --all)
@@ -520,18 +575,217 @@ mkdir -p dist
 cp -r ../wheels/*.whl dist
 
 # build using bazel
-export BUILD_TARGET="//tensorflow/tools/pip_package:wheel --repo_env=USE_PYWRAP_RULES=1 --repo_env=WHEEL_NAME=tensorflow"
+if [ "${BUILD_TYPE}" == "cuda" ]; then
+    export BUILD_TARGET="//tensorflow/tools/pip_package:wheel --repo_env=USE_PYWRAP_RULES=1 --repo_env=WHEEL_NAME=tensorflow --config=cuda --config=cuda_wheel"
+else
+    export BUILD_TARGET="//tensorflow/tools/pip_package:wheel --repo_env=USE_PYWRAP_RULES=1 --repo_env=WHEEL_NAME=tensorflow"
+fi
+
+# Symlink cuda for hermetic toolchain CUPTI resolution
+ln -sfn /usr/local/cuda-${CUDA_VERSION} /usr/local/cuda
+
+BAZEL_OUTPUT_BASE=$(bazel --bazelrc=$SRC_DIR/.tf_configure_bazelrc info output_base 2>/dev/null || \
+    find /root/.cache/bazel/_bazel_root -maxdepth 1 -type d | head -1)
+for repo in nvidia_nvshmem nvshmem_redist_json nvshmem; do
+    rm -rf "${BAZEL_OUTPUT_BASE}/external/${repo}"
+    rm -f  "${BAZEL_OUTPUT_BASE}/external/@${repo}.marker"
+done
+
+# Pre-fetch nvshmem_redist_json so its directory exists, then ensure it has
+# a BUILD file — Bazel requires one in the same or parentdir for any .bzl load.
+bazel --bazelrc=$SRC_DIR/.tf_configure_bazelrc fetch @nvshmem_redist_json//... 2>/dev/null || true
+NVSHMEM_REDIST_DIR="${BAZEL_OUTPUT_BASE}/external/nvshmem_redist_json"
+if [ -d "$NVSHMEM_REDIST_DIR" ] && [ ! -f "$NVSHMEM_REDIST_DIR/BUILD" ]; then
+    touch "${NVSHMEM_REDIST_DIR}/BUILD"
+    echo "Created empty BUILD file in nvshmem_redist_json repo"
+fi
+
+bazel --bazelrc=$SRC_DIR/.tf_configure_bazelrc fetch @cuda_cupti//... 2>/dev/null || true
+bazel --bazelrc=$SRC_DIR/.tf_configure_bazelrc fetch @cuda_cudart//... 2>/dev/null || true
+bazel --bazelrc=$SRC_DIR/.tf_configure_bazelrc fetch @cuda_cusolver//... 2>/dev/null || true
+bazel --bazelrc=$SRC_DIR/.tf_configure_bazelrc fetch @cuda_cusparse//... 2>/dev/null || true
+
+# Patch cuda_cudart BUILD: CUDA 13 hermetic wheels ship no libcudart_static.a.
+# cc_import requires a label (relative path), not an absolute path, so we
+# symlink libcudart.so from the local CUDA install into the repo directory,
+# then reference it as a relative label in the BUILD file.
+CUDART_DIR="${BAZEL_OUTPUT_BASE}/external/cuda_cudart"
+CUDART_BUILD="${CUDART_DIR}/BUILD"
+if [ -f "$CUDART_BUILD" ]; then
+    ln -sfn /usr/local/cuda-${CUDA_VERSION}/lib64/libcudart.so \
+        "${CUDART_DIR}/libcudart.so"
+    cat > "$CUDART_BUILD" << 'CUDART_EOF'
+licenses(["restricted"])
+
+# CUDA 13 hermetic wheels do not ship libcudart_static.a.
+# libcudart.so is symlinked from the local CUDA install into this repo dir.
+# @cuda_cudart//:static is used in srcs of cc_library in local_config_cuda,
+# so it must be a filegroup (produces raw files accepted by cc_library srcs).
+filegroup(
+    name = "static",
+    srcs = ["libcudart.so"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "cudart_static",
+    srcs = ["libcudart.so"],
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "cudart",
+    shared_library = "libcudart.so",
+    hdrs = glob(["include/**/*.h"], allow_empty = True),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "header_list",
+    srcs = glob(["include/**/*.h"], allow_empty = True),
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "headers",
+    hdrs = glob(["include/**/*.h"], allow_empty = True),
+    include_prefix = "third_party/gpus/cuda/include",
+    includes = ["include"],
+
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+CUDART_EOF
+    echo "Patched cuda_cudart BUILD: symlinked libcudart.so, using cc_import with relative label"
+fi
+
+CUPTI_DIR="${BAZEL_OUTPUT_BASE}/external/cuda_cupti"
+CUPTI_BUILD="${CUPTI_DIR}/BUILD"
+if [ -f "$CUPTI_BUILD" ]; then
+    ln -sfn /usr/local/cuda-${CUDA_VERSION}/extras/CUPTI/lib64/libcupti.so \
+        "${CUPTI_DIR}/libcupti.so"
+    cat > "$CUPTI_BUILD" << 'CUPTI_EOF'
+licenses(["restricted"])
+
+cc_import(
+    name = "cupti_shared",
+    shared_library = "libcupti.so",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "cupti",
+    hdrs = glob(["include/**/*.h"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [":cupti_shared"],
+)
+
+filegroup(
+    name = "header_list",
+    srcs = glob(["include/**/*.h"]),
+    visibility = ["@local_config_cuda//cuda:__pkg__"],
+)
+
+cc_library(
+    name = "headers",
+    hdrs = [":header_list"],
+    include_prefix = "third_party/gpus/cuda/extras/CUPTI/include",
+    includes = ["include/"],
+    strip_include_prefix = "include",
+    visibility = ["@local_config_cuda//cuda:__pkg__"],
+)
+CUPTI_EOF
+    echo "Patched cuda_cupti BUILD to expose headers and libcupti.so"
+fi
+
+CUSOLVER_DIR="${BAZEL_OUTPUT_BASE}/external/cuda_cusolver"
+CUSOLVER_BUILD="${CUSOLVER_DIR}/BUILD"
+if [ -f "$CUSOLVER_BUILD" ]; then
+    ln -sfn /usr/local/cuda-${CUDA_VERSION}/lib64/libcusolver.so \
+        "${CUSOLVER_DIR}/libcusolver.so"
+    python3.12 - <<PY
+from pathlib import Path
+path = Path(r"$CUSOLVER_BUILD")
+text = path.read_text()
+replacements = [
+    ("'''", "", 2),
+    ("    shared_library = \"lib/libcusolver.so.%{libcusolver_version}\",", "    shared_library = \"libcusolver.so\",", 1),
+    ("    #deps = [\":cusolver_shared_library\"],", "    deps = [\":cusolver_shared_library\"],", 1),
+    ("    #linkopts = if_cuda_newer_than(", "    linkopts = if_cuda_newer_than(", 1),
+    ("        #\"13_0\",", "        \"13_0\",", 1),
+    ("        #if_true = cuda_rpath_flags(\"nvidia/cu13/lib\"),", "        if_true = cuda_rpath_flags(\"nvidia/cu13/lib\"),", 1),
+    ("        #if_false = cuda_rpath_flags(\"nvidia/cusolver/lib\"),", "        if_false = cuda_rpath_flags(\"nvidia/cusolver/lib\"),", 1),
+    ("    #),", "    ),", 1),
+    ("    #srcs = glob([", "    srcs = glob([", 1),
+    ("        #\"include/cusolver*.h\",", "        \"include/cusolver*.h\",", 1),
+    ("    #]),", "    ]),", 1),
+]
+for old, new, count in replacements:
+    text = text.replace(old, new, count)
+path.write_text(text)
+PY
+    echo "Patched cuda_cusolver BUILD with minimal targeted edits"
+fi
+
+# Patch cuda_cusparse BUILD: CUDA 13 hermetic wheels ship no static lib.
+# Symlink libcusparse.so from the local CUDA install and rewrite the BUILD
+# so cc_import uses the relative symlink instead of the broken placeholder.
+CUSPARSE_DIR="${BAZEL_OUTPUT_BASE}/external/cuda_cusparse"
+CUSPARSE_BUILD="${CUSPARSE_DIR}/BUILD"
+if [ -f "$CUSPARSE_BUILD" ]; then
+    ln -sfn /usr/local/cuda-${CUDA_VERSION}/lib64/libcusparse.so \
+        "${CUSPARSE_DIR}/libcusparse.so"
+    cat > "$CUSPARSE_BUILD" << 'CUSPARSE_EOF'
+licenses(["restricted"])
+
+cc_import(
+    name = "cusparse_shared_library",
+    shared_library = "libcusparse.so",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "cusparse",
+    hdrs = glob(["include/**/*.h"], allow_empty = True),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [":cusparse_shared_library"],
+)
+
+filegroup(
+    name = "header_list",
+    srcs = glob(["include/**/*.h"], allow_empty = True),
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "headers",
+    hdrs = glob(["include/**/*.h"], allow_empty = True),
+    include_prefix = "third_party/gpus/cuda/include",
+    includes = ["include"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+CUSPARSE_EOF
+    echo "Patched cuda_cusparse BUILD: symlinked libcusparse.so, using cc_import with relative label"
+fi
 
 #Build package
 cd $SRC_DIR && bazel --bazelrc=$SRC_DIR/.tf_configure_bazelrc build --local_resources=cpu=HOST_CPUS*0.50 --local_resources=ram=HOST_RAM*0.50 --jobs=$BAZEL_JOBS ${BUILD_TARGET}
 
+
 #Install package
-if ! (python3.12 -m pip install bazel-bin/tensorflow/tools/pip_package/wheel_house/tensorflow_cpu-2.21.0-cp312-cp312-linux_x86_64.whl) ; then
+if ! (python3.12 -m pip install bazel-bin/tensorflow/tools/pip_package/wheel_house/tensorflow-2.21.0-cp312-cp312-linux_x86_64.whl) ; then
     echo "------------------$PACKAGE_NAME:install_fails-------------------------------------"
     echo "$PACKAGE_URL $PACKAGE_NAME"
     echo "$PACKAGE_NAME  |  $PACKAGE_URL | $PACKAGE_VERSION | GitHub | Fail |  Install_Fails"
     exit 1
 fi
 
-echo "-------------------------------tensorflow installation successful-------------------------------------"
- 
+cp bazel-bin/tensorflow/tools/pip_package/wheel_house/tensorflow-2.21.0-cp312-cp312-linux_x86_64.whl ${CURRENT_DIR}
+
+echo "------------------------------- Tensorflow Successfully Installed -------------------------------------"
+
+
