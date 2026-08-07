@@ -10,12 +10,11 @@ build-backend = "setuptools.build_meta"
 #Project name an version
 [project]
 name = "re2"
-version = "20220401"
+version = "{PACKAGE_VERSION}"
 
 #One line description
 description = "RE2 is a fast, safe, thread-friendly alternative to backtracking regular expression engines like those used in PCRE, Perl, and Python. It is a C++ library."
 
-maintainers = [ { name = "Open-CE" } ]
 
 #Classifiers to improve pacakage discoverability
 classifiers = [
@@ -27,7 +26,7 @@ classifiers = [
 #Project URLs
 [project.urls]
 homepage = "https://github.com/google/re2/"
-upstream = "http://github.com/google/re2/archive/2022-04-01.tar.gz"
+upstream = "https://github.com/google/re2/tree/2022-04-01"
 
 #Find packages files in local folder, this is needed as we are not following standar directory structure of setuptools
 [tool.setuptools.packages.find]

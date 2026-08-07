@@ -31,9 +31,8 @@ echo "PACKAGE_VERSION: $PACKAGE_VERSION"
 echo "PACKAGE_URL: $PACKAGE_URL"
 
 OUTPUT_DIR=$(pwd)
-SCRIPT_DIR=../../s/snappy
 
-# Install system-level build dependencies required for XGBoost
+# Install system-level build dependencies required for snappy
 yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++
 
 echo "Building snappy..."
@@ -61,12 +60,12 @@ make -j$(nproc)
 make install
 cd ..
 
-cp -r $SCRIPT_DIR/pyproject.toml .
+cd ${OUTPUT_DIR}
+#install pyproject.toml
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/s/snappy/pyproject.toml
+sed -i s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g pyproject.toml
 
 pip install setuptools
-
-# Write wheel into the wrapper's working directory (gha-script)
-echo "Wheel output directory: ${OUTPUT_DIR}"
 
 python -m pip wheel \
        -w "$OUTPUT_DIR" \

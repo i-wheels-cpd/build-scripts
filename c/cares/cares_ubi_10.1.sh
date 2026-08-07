@@ -23,10 +23,12 @@ PACKAGE=c-ares
 PACKAGE_VERSION=cares-1_19_1
 PACKAGE_URL=https://github.com/c-ares/c-ares
 WORK_DIR=$(pwd)
-SCRIPT_DIR=../c/cares
+
+echo "Installing dependencies..."
+yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++ 
 
 #prerequisite
-pip install ninja setuptools
+pip install setuptools ninja build wheel
 
 # Clone cares source repository
 echo "Cloning the repository..."
@@ -77,7 +79,11 @@ cd $WORK_DIR
 mkdir -p local/cares
 
 cp -r c-ares/prefix/* local/cares
-cp -r $SCRIPT_DIR/pyproject.toml .
+
+#install pyproject.toml
+WHL_VERSION=$(echo "$PACKAGE_VERSION" | grep -oE '[0-9_]+$' | tr '_' '.')
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/c/cares/pyproject.toml
+sed -i "s/{PACKAGE_VERSION}/$WHL_VERSION/g" pyproject.toml
 
 python -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
 

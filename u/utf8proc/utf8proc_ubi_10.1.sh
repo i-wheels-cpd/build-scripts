@@ -24,8 +24,10 @@ PACKAGE=utf8proc
 PACKAGE_VERSION=2.6.1
 PACKAGE_URL=https://github.com/JuliaStrings/utf8proc
 
+echo "------------------------Installing dependencies-------------------"
+yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++ gcc-gfortran
+
 WORK_DIR=$(pwd)
-SCRIPT_DIR=../u/utf8proc
 cd $WORK_DIR
 
 # Clone utf8proc source repository
@@ -56,7 +58,11 @@ cd $WORK_DIR
 mkdir -p local/$PACKAGE
 
 cp -r utf8proc/prefix/* local/$PACKAGE/
-cp -r $SCRIPT_DIR/pyproject.toml .
+
+# Download pyproject.toml template
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/u/utf8proc/pyproject.toml
+sed -i s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g pyproject.toml
+
 pip install setuptools
 
 python -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .

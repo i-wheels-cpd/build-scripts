@@ -23,7 +23,9 @@ PACKAGE=re2
 PACKAGE_VERSION=2022-04-01
 PACKAGE_URL=https://github.com/google/re2
 WORK_DIR=$(pwd)
-SCRIPT_DIR=../r/re2
+
+echo "Installing dependencies..."
+yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++
 
 #prerequisite
 pip install ninja setuptools
@@ -69,8 +71,10 @@ cd $WORK_DIR
 
 mkdir -p local/$PACKAGE
 
+#install pyproject.toml
 cp -r re2/prefix/* local/$PACKAGE/
-cp -r $SCRIPT_DIR/pyproject.toml .
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/r/re2/pyproject.toml
+sed -i "s/{PACKAGE_VERSION}/$(echo $PACKAGE_VERSION | tr -d '-')/g" pyproject.toml
 
 python -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
 
@@ -84,7 +88,7 @@ if ! pip install "${WHEEL}" --no-deps; then
     echo "${PACKAGE} | ${PACKAGE_URL} | ${PACKAGE_VERSION} | GitHub | Fail | Install_Fails"
     exit 1
 fi
-SITE_PACKAGES=$(python -m pip show utf8proc | awk -F': ' '/^Location:/ {print $2}')
+SITE_PACKAGES=$(python -m pip show re2 | awk -F': ' '/^Location:/ {print $2}')
 
 test -f ${SITE_PACKAGES}/re2/lib/libre2.so || { echo "ERROR: libre2.so not exists." ; exit 1; }
 test ! -f ${SITE_PACKAGES}/re2/lib/libre2.a || { echo "ERROR: libre2.a exists." ; exit 1; }
