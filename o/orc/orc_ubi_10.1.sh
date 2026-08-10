@@ -127,7 +127,7 @@ echo "--------------------------replaced version in pyproject.toml--------------
 
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/o/orc/cmake_orc.patch
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/o/orc/orc.patch
-git apply cmake_orc.diff
+git apply cmake_orc.patch
 git apply orc.patch
 
 mkdir prefix
