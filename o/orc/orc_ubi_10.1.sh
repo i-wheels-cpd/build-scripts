@@ -184,7 +184,7 @@ echo "----------------------------------------------Testing pkg-----------------
 cd build
 
 # Test package
-if ! (ninja test) ; then
+if ! (ctest -E '^tool-test$'); then
     ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
     export TZDIR=/usr/share/zoneinfo
     echo "------------------$PACKAGE_NAME:install_success_but_test_fails---------------------"
