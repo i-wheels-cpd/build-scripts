@@ -1,7 +1,7 @@
 #!/bin/bash -e
 # -----------------------------------------------------------------------------
 #
-# Package       : opus
+# Package       : Scipy
 # Version       : 1.17.1
 # Source repo   : https://github.com/scipy/scipy
 # Tested on     : UBI:10.1
