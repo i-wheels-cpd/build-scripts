@@ -24,9 +24,9 @@ PACKAGE_URL=https://github.com/protocolbuffers/protobuf
 PACKAGE_DIR="protobuf"
 WORK_DIR=$(pwd)
 
-yum install -y make libtool cmake git wget xz zlib-devel openssl-devel bzip2-devel libffi-devel libevent-devel patch python python-devel python-pip ninja-build gcc-c++ g++
+yum install -y make libtool cmake git wget xz zlib-devel openssl-devel bzip2-devel libffi-devel libevent-devel patch python3.12 python3.12-devel python3.12-pip ninja-build gcc-c++ g++
 
-PYTHON_VERSION=$(python --version 2>&1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
+PYTHON_VERSION=$(python3.12 --version 2>&1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
 export SITE_PACKAGE_PATH="/lib/python${PYTHON_VERSION}/site-packages"
 
 pip install --upgrade cmake pip setuptools wheel ninja packaging
@@ -87,6 +87,6 @@ cd ..
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/l/libprotobuf/pyproject.toml
 sed -i "s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g" pyproject.toml
 
-python -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
+python3.12 -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
 
 exit 0
