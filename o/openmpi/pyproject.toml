@@ -30,3 +30,5 @@ where = ["local"]
 [tool.setuptools.package-data]
 openmpi = ["bin/*", "lib/**/*", "include/**/*", "share/**/*", "etc/*"]
 
+[tool.distutils.bdist_wheel]
+plat-name = "linux_x86_64"  # Explicitly set the platform tag
