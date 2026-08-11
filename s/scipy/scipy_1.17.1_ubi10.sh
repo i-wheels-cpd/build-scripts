@@ -112,7 +112,7 @@ export OpenBLAS_HOME="/usr/include/openblas"
 export SITE_PACKAGE_PATH=/usr/local/lib/python3.12/site-packages
 
 echo "Dependency installations"
-python -m pip wheel -v . --no-build-isolation --no-deps
+python3.12 -m pip wheel -v . --no-build-isolation --no-deps
 
 if ! python3.12 -m pip install .; then
     echo "------------------$PACKAGE_NAME:Install_fails-------------------------------------"
