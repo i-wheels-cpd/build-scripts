@@ -1,6 +1,22 @@
-#!/bin/bash
-set -e
-
+#!/bin/bash -e
+# -----------------------------------------------------------------------------
+#
+# Package       : pyarrow
+# Version       : 24.0.0
+# Source repo   : https://github.com/apache/arrow
+# Tested on     : UBI:10.1
+# Language      : C++
+# Ci-Check      : True
+# Script License: Apache License, Version 2 or later
+# Maintainer    : Nayana Thorat <Nayana.Thorat1@ibm.com>
+# Disclaimer    : This script has been tested in root mode on given
+# ==========      platform using the mentioned version of the package.
+#                 It may not work as expected with newer versions of the
+#                 package and/or distribution. In such case, please
+#                 contact "Maintainer" of this script.
+#
+# ----------------------------------------------------------------------------
+set -ex
 PACKAGE_NAME=pyarrow
 PACKAGE_DIR=arrow/python
 PACKAGE_VERSION=${1:-apache-arrow-24.0.0}
