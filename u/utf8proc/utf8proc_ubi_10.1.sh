@@ -21,7 +21,7 @@ set -ex
 
 # Package configuration
 PACKAGE=utf8proc
-PACKAGE_VERSION=2.6.1
+PACKAGE_VERSION=${1:-2.6.1}
 PACKAGE_URL=https://github.com/JuliaStrings/utf8proc
 
 echo "------------------------Installing dependencies-------------------"

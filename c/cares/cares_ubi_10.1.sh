@@ -20,7 +20,7 @@
 set -ex
 
 PACKAGE=c-ares
-PACKAGE_VERSION=cares-1_19_1
+PACKAGE_VERSION=${1:-cares-1_19_1}
 PACKAGE_URL=https://github.com/c-ares/c-ares
 WORK_DIR=$(pwd)
 
@@ -81,7 +81,7 @@ cp -r c-ares/prefix/* local/cares
 
 #install pyproject.toml
 WHL_VERSION=$(echo "$PACKAGE_VERSION" | grep -oE '[0-9_]+$' | tr '_' '.')
-#wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/c/cares/pyproject.toml
+wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/c/cares/pyproject.toml
 sed -i "s/{PACKAGE_VERSION}/$WHL_VERSION/g" pyproject.toml
 
 python3.12 -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .

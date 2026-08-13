@@ -22,8 +22,7 @@
 set -ex
 
 PACKAGE_NAME=snappy
-PACKAGE_VERSION=1.2.2
-PYTHON_VERSION=3.12
+PACKAGE_VERSION=${1:-1.2.2}
 PACKAGE_URL=https://github.com/google/snappy
 
 echo "PACKAGE_NAME: $PACKAGE_NAME"

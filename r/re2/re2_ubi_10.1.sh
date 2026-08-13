@@ -20,7 +20,7 @@
 set -ex
 
 PACKAGE=re2
-PACKAGE_VERSION=2022-04-01
+PACKAGE_VERSION=${1:-2022-04-01}
 PACKAGE_URL=https://github.com/google/re2
 WORK_DIR=$(pwd)
 
