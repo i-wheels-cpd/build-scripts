@@ -33,7 +33,7 @@ echo "PACKAGE_URL: $PACKAGE_URL"
 OUTPUT_DIR=$(pwd)
 
 # Install system-level build dependencies required for snappy
-yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++
+yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig gcc gcc-c++
 
 echo "Building snappy..."
 
@@ -67,7 +67,7 @@ sed -i s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g pyproject.toml
 
 pip install setuptools
 
-python -m pip wheel \
+python3.12 -m pip wheel \
        -w "$OUTPUT_DIR" \
        -vv \
        --no-build-isolation \

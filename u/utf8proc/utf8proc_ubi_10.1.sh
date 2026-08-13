@@ -25,7 +25,7 @@ PACKAGE_VERSION=2.6.1
 PACKAGE_URL=https://github.com/JuliaStrings/utf8proc
 
 echo "------------------------Installing dependencies-------------------"
-yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++ gcc-gfortran
+yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig gcc gcc-c++ gcc-gfortran
 
 WORK_DIR=$(pwd)
 cd $WORK_DIR
@@ -65,7 +65,7 @@ sed -i s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g pyproject.toml
 
 pip install setuptools
 
-python -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
+python3.12 -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
 
 # Install locally built wheel for validation
 
@@ -77,7 +77,7 @@ if ! pip install "${WHEEL}" --no-deps; then
     echo "${PACKAGE} | ${PACKAGE_URL} | ${PACKAGE_VERSION} | GitHub | Fail | Install_Fails"
     exit 1
 fi
-SITE_PACKAGES=$(python -m pip show utf8proc | awk -F': ' '/^Location:/ {print $2}')
+SITE_PACKAGES=$(python3.12 -m pip show utf8proc | awk -F': ' '/^Location:/ {print $2}')
 test -f "${SITE_PACKAGES}/utf8proc/include/utf8proc.h" || {
     echo "ERROR: utf8proc.h not found"
     exit 1

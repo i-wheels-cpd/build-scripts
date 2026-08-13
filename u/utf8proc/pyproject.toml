@@ -41,3 +41,5 @@ where = ["local"]
 [tool.setuptools.package-data]
 utf8proc = ["lib/*", "include/*"]
 
+[tool.distutils.bdist_wheel]
+plat-name = "linux_x86_64" # Explicitly set the platform tag

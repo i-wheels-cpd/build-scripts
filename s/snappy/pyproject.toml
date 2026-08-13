@@ -38,3 +38,6 @@ where = ["local"]
 #Package data to add bazel in wheel, this is needed as its not a .py file
 [tool.setuptools.package-data]
 snappy = ["lib/**/*", "share/**/*", "include/**/*"]
+
+[tool.distutils.bdist_wheel]
+plat-name = "linux_x86_64" # Explicitly set the platform tag

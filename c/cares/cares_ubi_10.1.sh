@@ -25,7 +25,7 @@ PACKAGE_URL=https://github.com/c-ares/c-ares
 WORK_DIR=$(pwd)
 
 echo "Installing dependencies..."
-yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++ 
+yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig gcc gcc-c++ 
 
 #prerequisite
 pip install setuptools ninja build wheel
@@ -70,7 +70,6 @@ cmake ${CMAKE_ARGS} .. \
       -DCARES_INSTALL=ON \
       -DCMAKE_INSTALL_LIBDIR=lib \
       -GNinja
-      #${SRC_DIR}
 
 ninja || exit 1
 ninja install || exit 1
@@ -82,10 +81,10 @@ cp -r c-ares/prefix/* local/cares
 
 #install pyproject.toml
 WHL_VERSION=$(echo "$PACKAGE_VERSION" | grep -oE '[0-9_]+$' | tr '_' '.')
-wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/c/cares/pyproject.toml
+#wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/c/cares/pyproject.toml
 sed -i "s/{PACKAGE_VERSION}/$WHL_VERSION/g" pyproject.toml
 
-python -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
+python3.12 -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
 
 # Install locally built wheel for validation
 
@@ -96,7 +95,7 @@ if ! pip install "${WHEEL}" --no-deps; then
     echo "${PACKAGE} | ${PACKAGE_URL} | ${PACKAGE_VERSION} | GitHub | Fail | Install_Fails"
     exit 1
 fi
-SITE_PACKAGE_PATH=$(python -m pip show c-ares | awk -F': ' '/^Location:/ {print $2}')
+SITE_PACKAGE_PATH=$(python3.12 -m pip show c-ares | awk -F': ' '/^Location:/ {print $2}')
 
 test -f ${SITE_PACKAGE_PATH}/cares/include/ares.h || { echo "ERROR: ares.h not exists." ; exit 1; }
 test -f ${SITE_PACKAGE_PATH}/cares/lib/libcares.so || { echo "ERROR: libcares.so not exists." ; exit 1; }
