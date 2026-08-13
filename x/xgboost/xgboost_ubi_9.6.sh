@@ -22,8 +22,8 @@ set -ex
 
 # Package configuration
 PACKAGE_NAME=xgboost
-PACKAGE_VERSION="v3.2.0"
-BUILD_TYPE=${1:-cpu}     # cpu | cuda
+PACKAGE_VERSION=${1:-v3.2.0}
+BUILD_TYPE=${2:-cpu}     # cpu | cuda
 PACKAGE_URL=https://github.com/dmlc/xgboost
 PACKAGE_DIR=xgboost/python-package
 
@@ -37,7 +37,7 @@ echo "PACKAGE_URL: $PACKAGE_URL"
 echo "OUTPUT_FOLDER: $OUTPUT_FOLDER"
 
 # Install system-level build dependencies required for XGBoost
-yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig g++ gcc-c++ gcc-gfortran graphviz
+yum install -y git make cmake wget python3.12 python3.12-devel python3.12-pip pkgconfig gcc gcc-c++ gcc-gfortran graphviz
 
 echo "Building xgboost..."
 
@@ -57,7 +57,7 @@ if [ ! -d "$PACKAGE_NAME" ]; then
     git clone $PACKAGE_URL
 fi
 cd $PACKAGE_NAME/
-git checkout $PACKAGE_VERSION
+git checkout v$PACKAGE_VERSION
 git submodule update --init
 export SRC_DIR=$(pwd)
 echo "SRC_DIR: $SRC_DIR"
@@ -116,7 +116,7 @@ if [ "$BUILD_TYPE" = "cpu" ]; then
     sed -i '/nvidia-nccl-cu12/d' pyproject.toml
 fi
 
-python -m pip wheel -w ${OUTPUT_FOLDER} -v . --no-build-isolation --no-deps
+python3.12 -m pip wheel -w ${OUTPUT_FOLDER} -v . --no-build-isolation --no-deps
 
 popd
 
