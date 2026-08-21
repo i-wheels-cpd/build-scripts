@@ -2,11 +2,28 @@
 
 PYTHON_VERSION=$1
 BUILD_SCRIPT_PATH=${2:-""}
-EXTRA_ARGS="${@:3}" # Capture all additional arguments passed to the script
+SUFFIX=${3:-"+ibmpyeco"}
+CLASSIFIER=${4:-"Environment :: MetaData:: IBM Python Ecosystem"}
+EXTRA_ARGS="${@:5}"  # Capture all additional arguments passed to the script
 CURRENT_DIR="${PWD}"
 EXIT_CODE=0
 
+#install gcc
 yum install -y zip unzip 
+
+UBI_MAJOR=$(grep -oP '(?<=^VERSION_ID=")[0-9]+' /etc/os-release || grep -oP 'release \K[0-9]+' /etc/redhat-release 2>/dev/null || echo "8")
+if [[ "$UBI_MAJOR" -ge 10 ]]; then
+    GCC_TOOLSET="gcc-toolset-15"
+    yum install -y "$GCC_TOOLSET"
+    # On UBI 10, SCL (Software Collections) was dropped  -  there is no enable script.
+    # Activate the toolset by prepending its bin directory to PATH directly.
+    export PATH="/opt/rh/${GCC_TOOLSET}/root/usr/bin:$PATH"
+else
+    GCC_TOOLSET="gcc-toolset-13"
+    yum install -y "$GCC_TOOLSET"
+    source /opt/rh/${GCC_TOOLSET}/enable
+fi
+gcc --version
 
 # Temporary build script path
 if [ -n "$BUILD_SCRIPT_PATH" ]; then
@@ -66,6 +83,24 @@ install_python_version() {
             cd .. && rm -rf Python-3.13.0.tgz
         fi
         ;;
+    "3.14")
+        if ! python3.14 --version &>/dev/null; then
+            if [[ "$UBI_MAJOR" -ge 10 ]]; then
+                yum install -y python3.14 python3.14-devel python3.14-pip
+            else
+                yum install -y sudo zlib-devel wget ncurses git make cmake openssl-devel xz xz-devel
+                yum install -y libffi libffi-devel sqlite sqlite-devel sqlite-libs bzip2-devel
+                wget https://www.python.org/ftp/python/3.14.3/Python-3.14.3.tgz
+                tar xzf Python-3.14.3.tgz
+                cd Python-3.14.3
+                ./configure --prefix=/usr/local --enable-optimizations --enable-shared
+                make -j2
+                make altinstall
+                echo "/usr/local/lib" > /etc/ld.so.conf.d/python-local.conf && ldconfig
+                cd .. && rm -rf Python-3.14.3.tgz
+            fi
+        fi
+        ;;        
     *)
         echo "Unsupported Python version: $version"
         exit 1
@@ -116,68 +151,98 @@ cleanup() {
     rm -rf "$VENV_DIR"
 }
 
-# Function to modify the metadata file after wheel creation
-modify_metadata_file() {
-    local wheel_path="$1"
-    
-    # Create a temporary directory for unzipping the wheel file
-    temp_dir="temp_directory"
-    mkdir -p "$temp_dir"
+# Function to apply suffix and/or classifier to a wheel file.
+# Mirrors the logic from opence-pip-packaging/common/change-suffix.sh.
+#
+# Usage: change_suffix_classifier <wheel_path> <suffix> <classifier>
+#   suffix     - version suffix string e.g. "+ibmpyeco". Pass "None" to skip.
+#   classifier - classifier string e.g. "Environment :: MetaData :: IBM Python Ecosystem". Pass "None" to skip.
+change_suffix_classifier() {
+    local wheel_file="$1"
+    local suffix="$2"
+    local classifier="$3"
 
-    # Extract wheel to temp directory
-    unzip -q "$wheel_path" -d "$temp_dir"
+    # Preserve original platform tag (last dash-separated token before .whl)
+    local arch
+    arch=$(basename "$wheel_file" | rev | cut -d '-' -f1 | rev | sed 's/\.whl//')
 
-    # Find metadata file
-    local metadata_file
-    metadata_file=$(find "$temp_dir" -name METADATA -path "*.dist-info/*")
+    # Extract wheel contents
+    local contents_dir="$CURRENT_DIR/contents"
+    [ -d "$contents_dir" ] && rm -rf "$contents_dir"
+    unzip -q "$wheel_file" -d "$contents_dir"
+    cd "$contents_dir"
 
-    # New classifier to add
-    local new_classifier="Classifier: Environment :: MetaData :: IBM Python Ecosystem"
-
-    # Only proceed if the classifier is not already present
-    if grep -q "^$new_classifier$" "$metadata_file"; then
-        echo "Classifier already exists in $wheel_path — no changes made."
-    else
-        awk -v new_classifier="$new_classifier" '
-            BEGIN {
-                found_classifier = 0
-                output = ""
-            }
-            /^Classifier:/ {
-                found_classifier = 1
-                last_classifier_line = NR
-            }
-            {
-                lines[NR] = $0
-            }
-            END {
-                if (found_classifier) {
-                    for (i = 1; i <= NR; i++) {
-                        print lines[i]
-                        if (i == last_classifier_line) {
-                            print new_classifier
-                        }
-                    }
-                } else {
-                    print new_classifier
-                    for (i = 1; i <= NR; i++) {
-                        print lines[i]
-                    }
-                }
-            }
-        ' "$metadata_file" > "$metadata_file.tmp" && mv "$metadata_file.tmp" "$metadata_file"
-
-        # Get the original wheel file name
-        wheel_file_name=$(basename "$wheel_path")
-
-        # Repack wheel
-        cd "$temp_dir" && zip -q -r "$CURRENT_DIR/$wheel_file_name" ./*
-
-        echo "Added IBM classifier to $wheel_path"
+    # Locate .dist-info directory
+    local dist_info_dir
+    dist_info_dir=$(find . -type d -name "*.dist-info")
+    if [ -z "$dist_info_dir" ]; then
+        echo ".dist-info directory not found in $wheel_file!"
+        rm -rf "$contents_dir"
+        return 1
     fi
 
-    # Clean up
-    rm -rf "$CURRENT_DIR/$temp_dir"
+    local metadata_file="$dist_info_dir/METADATA"
+
+    # --- Apply version suffix ---
+    local new_dist_info_dir="$dist_info_dir"
+    local base_name new_version
+    if [[ "$suffix" != "None" ]]; then
+        local original_version
+        original_version=$(grep -m1 "^Version:" "$metadata_file" | awk '{print $2}')
+        if [ -z "$original_version" ]; then
+            echo "Version not found in METADATA of $wheel_file!"
+            rm -rf "$contents_dir"
+            return 1
+        fi
+
+        # Strip any existing suffix, then append the new one
+        new_version=$(echo "$original_version" | cut -d '+' -f1)
+        new_version="${new_version}${suffix}"
+
+        # Update METADATA version field
+        sed -i "s/^Version: .*/Version: $new_version/" "$metadata_file"
+
+        # Rename .dist-info directory to include new version
+        base_name=$(basename "$dist_info_dir" | sed -E 's/(.*)-([0-9a-zA-Z]+([+.][0-9a-zA-Z]+)*).dist-info/\1/')
+        new_dist_info_dir="${base_name}-${new_version}.dist-info"
+        mv "$dist_info_dir" "$new_dist_info_dir"
+
+        metadata_file="$new_dist_info_dir/METADATA"
+    fi
+
+    # --- Apply classifier ---
+    if [[ "$classifier" != "None" ]]; then
+        echo "Classifier: ${classifier}" >> "$metadata_file"
+    fi
+
+    # --- Repack wheel using `wheel pack` ---
+    cd "$CURRENT_DIR"
+    pip show wheel &>/dev/null || pip install --quiet wheel
+    wheel pack "$contents_dir" --dest-dir "$CURRENT_DIR"
+
+    # Restore original platform tag
+    local matches
+    matches=$(find "$CURRENT_DIR" -maxdepth 1 -type f -name "${base_name:-*}-${new_version:-*}*.whl" | head -2)
+    local match_count
+    match_count=$(echo "$matches" | grep -c '\.whl' || true)
+    if [ "$match_count" -eq 1 ]; then
+        local new_file_name
+        new_file_name=$(echo "$matches" | sed -E "s/[^-]+\.whl$/${arch}.whl/")
+        [[ "$matches" != "$new_file_name" ]] && mv "$matches" "$new_file_name"
+    elif [ "$match_count" -gt 1 ]; then
+        echo "Warning: more than one wheel matched after repacking — skipping platform tag restore."
+    else
+        echo "Warning: repacked wheel not found — skipping platform tag restore."
+    fi
+
+    # Remove the original (pre-suffix) wheel if a new one was produced
+    if [[ "$suffix" != "None" ]] && [ -f "$wheel_file" ]; then
+        rm -f "$wheel_file"
+    fi
+
+    # Clean up extraction directory
+    rm -rf "$contents_dir"
+    echo "Suffix/classifier applied to $(basename "$wheel_file")"
 }
 
 # Format the build script if it's non-empty
@@ -239,12 +304,14 @@ else
     fi
 fi
 
-cd $CURRENT_DIR
+cd "$CURRENT_DIR"
 if ls *.whl 1>/dev/null 2>&1; then
-    echo "=============== Modifying Metadata file =================="
-    #add modifying metadata file
-    wheel_file=$(ls *.whl 1>/dev/null 2>&1 && echo *.whl)
-    modify_metadata_file "$wheel_file"
+    if [[ "$SUFFIX" != "None" ]] || [[ "$CLASSIFIER" != "None" ]]; then
+        echo "=============== Applying suffix/classifier to wheel(s) =================="
+        for whl in *.whl; do
+            change_suffix_classifier "$CURRENT_DIR/$whl" "$SUFFIX" "$CLASSIFIER"
+        done
+    fi
 fi
 
 # Clean up virtual environment
