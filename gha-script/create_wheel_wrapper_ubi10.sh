@@ -2,9 +2,7 @@
 
 PYTHON_VERSION=$1
 BUILD_SCRIPT_PATH=${2:-""}
-SUFFIX=${3:-"+ibmpyeco"}
-CLASSIFIER=${4:-"Environment :: MetaData:: IBM Python Ecosystem"}
-EXTRA_ARGS="${@:5}"  # Capture all additional arguments passed to the script
+EXTRA_ARGS=("${@:3}")  # Capture all additional arguments passed to the script
 CURRENT_DIR="${PWD}"
 EXIT_CODE=0
 
@@ -139,7 +137,7 @@ create_venv() {
     local VENV_DIR=$1
     local python_version=$2
 
-    "python$python_version" -m venv --system-site-packages "$VENV_DIR"
+    "python$python_version" -m venv "$VENV_DIR"
     source "$VENV_DIR/bin/activate"
 }
 
@@ -157,6 +155,12 @@ cleanup() {
 # Usage: change_suffix_classifier <wheel_path> <suffix> <classifier>
 #   suffix     - version suffix string e.g. "+ibmpyeco". Pass "None" to skip.
 #   classifier - classifier string e.g. "Environment :: MetaData :: IBM Python Ecosystem". Pass "None" to skip.
+if [[ " ${EXTRA_ARGS[*]} " == *" cuda "* ]]; then
+    SUFFIX="+ibmpyeco.cuda13.3"
+else
+    SUFFIX="+ibmpyeco"
+fi
+CLASSIFIER="Environment :: MetaData:: IBM Python Ecosystem"
 change_suffix_classifier() {
     local wheel_file="$1"
     local suffix="$2"
@@ -268,7 +272,7 @@ if [ -n "$TEMP_BUILD_SCRIPT_PATH" ]; then
     package_name=$(basename "$package_url" .git)
 
     echo "Running the build script..."
-    source "$TEMP_BUILD_SCRIPT_PATH" "$EXTRA_ARGS"
+    source "$TEMP_BUILD_SCRIPT_PATH" "${EXTRA_ARGS[@]}"
     
 else
     echo "No build script to run, skipping execution."
