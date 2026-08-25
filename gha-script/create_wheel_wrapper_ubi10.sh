@@ -272,7 +272,8 @@ if [ -n "$TEMP_BUILD_SCRIPT_PATH" ]; then
     package_name=$(basename "$package_url" .git)
 
     echo "Running the build script..."
-    source "$TEMP_BUILD_SCRIPT_PATH" "${EXTRA_ARGS[@]}"
+    set -- "${EXTRA_ARGS[@]}"
+    source "$TEMP_BUILD_SCRIPT_PATH" "$@"
     
 else
     echo "No build script to run, skipping execution."
