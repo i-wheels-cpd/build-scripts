@@ -297,12 +297,12 @@ else
     echo "=============== Building wheel =================="
 
     # Attempt to build the wheel without isolation
-    if ! python -m build --wheel --no-isolation --outdir="$CURRENT_DIR/"; then
+    if ! python$PYTHON_VERSION -m build --wheel --no-isolation --outdir="$CURRENT_DIR/"; then
         echo "============ Wheel Creation Failed for Python $PYTHON_VERSION (without isolation) ================="
         echo "Attempting to build with isolation..."
 
         # Attempt to build the wheel without isolation
-        if ! python -m build --wheel --outdir="$CURRENT_DIR/"; then
+        if ! python$PYTHON_VERSION -m build --wheel --outdir="$CURRENT_DIR/"; then
             echo "============ Wheel Creation Failed for Python $PYTHON_VERSION ================="
             EXIT_CODE=1
         fi
