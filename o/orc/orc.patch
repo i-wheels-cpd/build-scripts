@@ -1,0 +1,56 @@
+diff --git a/c++/src/io/InputStream.cc b/c++/src/io/InputStream.cc
+index c0a4d81a0..850f799d9 100644
+--- a/c++/src/io/InputStream.cc
++++ b/c++/src/io/InputStream.cc
+@@ -112,8 +112,8 @@ namespace orc {
+     return false;
+   }
+
+-  google::protobuf::int64 SeekableArrayInputStream::ByteCount() const {
+-    return static_cast<google::protobuf::int64>(position);
++  int64_t SeekableArrayInputStream::ByteCount() const {
++    return static_cast<int64_t>(position);
+   }
+
+   void SeekableArrayInputStream::seek(PositionProvider& seekPosition) {
+diff --git a/c++/src/io/InputStream.hh b/c++/src/io/InputStream.hh
+index 5e1b4ba0a..33c64f880 100644
+--- a/c++/src/io/InputStream.hh
++++ b/c++/src/io/InputStream.hh
+@@ -72,7 +72,7 @@ namespace orc {
+     virtual bool Next(const void** data, int* size) override;
+     virtual void BackUp(int count) override;
+     virtual bool Skip(int count) override;
+-    virtual google::protobuf::int64 ByteCount() const override;
++    virtual int64_t ByteCount() const override;
+     virtual void seek(PositionProvider& position) override;
+     virtual std::string getName() const override;
+   };
+diff --git a/c++/src/io/OutputStream.cc b/c++/src/io/OutputStream.cc
+index ac5339c64..585bff9f8 100644
+--- a/c++/src/io/OutputStream.cc
++++ b/c++/src/io/OutputStream.cc
+@@ -61,8 +61,8 @@ namespace orc {
+     }
+   }
+
+-  google::protobuf::int64 BufferedOutputStream::ByteCount() const {
+-    return static_cast<google::protobuf::int64>(dataBuffer->size());
++  int64_t BufferedOutputStream::ByteCount() const {
++    return static_cast<int64_t>(dataBuffer->size());
+   }
+
+   bool BufferedOutputStream::WriteAliasedRaw(const void*, int) {
+diff --git a/c++/src/io/OutputStream.hh b/c++/src/io/OutputStream.hh
+index 146b1bda7..d8bc21ce6 100644
+--- a/c++/src/io/OutputStream.hh
++++ b/c++/src/io/OutputStream.hh
+@@ -61,7 +61,7 @@ namespace orc {
+
+     virtual bool Next(void** data, int* size) override;
+     virtual void BackUp(int count) override;
+-    virtual google::protobuf::int64 ByteCount() const override;
++    virtual int64_t ByteCount() const override;
+     virtual bool WriteAliasedRaw(const void* data, int size) override;
+     virtual bool AllowsAliasing() const override;
+
