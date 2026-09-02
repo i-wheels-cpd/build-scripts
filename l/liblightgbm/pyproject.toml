@@ -1,0 +1,32 @@
+# Minimum requirements for the build system to execute.
+requires = [
+    "wheel",
+    "setuptools",
+    "openmpi",
+]
+
+# Set build backend to setuptools
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "liblightgbm"
+version = "{PACKAGE_VERSION}"
+description = "Light Gradient Boosting Machine — compiled shared library (lib_lightgbm.so) and headers."
+maintainers = [ { name = "Open-CE" } ]
+classifiers = [
+  "Programming Language :: C++, Python",
+  "License :: Apache License 2.0",
+]
+
+[project.urls]
+homepage = "https://github.com/microsoft/LightGBM"
+upstream = "https://github.com/microsoft/LightGBM"
+
+# Find packages under local/ — maps local/liblightgbm/ → liblightgbm package in wheel
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["local"]
+
+[tool.setuptools.package-data]
+liblightgbm = ["lib/*", "bin/*", "include/**/*"]
+
