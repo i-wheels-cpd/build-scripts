@@ -15,6 +15,7 @@ version = "1.81.0"
 #One line description
 description = "Free peer-reviewed portable C++ source libraries."
 
+maintainers = [ { name = "Open-CE" } ]
 
 #Classifiers to improve pacakage discoverability
 classifiers = [

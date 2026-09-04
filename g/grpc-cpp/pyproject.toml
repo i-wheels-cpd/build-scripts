@@ -11,10 +11,12 @@ build-backend = "setuptools.build_meta"
 #Project name an version
 [project]
 name = "grpc-cpp"
-version = "1.71.0"
+version = "1.80.0"
 
 #One line description
 description = "gRPC - A high-performance, open-source universal RPC framework"
+
+maintainers = [ { name = "Open-CE" } ]
 
 #Classifiers to improve pacakage discoverability
 classifiers = [
@@ -26,7 +28,7 @@ classifiers = [
 #Project URLs
 [project.urls]
 homepage = "https://grpc.io/"
-upstream = "https://github.com/grpc/grpc/tree/v1.68.0"
+upstream = "https://github.com/grpc/grpc/tree/v1.80.0"
 
 #Find packages files in local folder, this is needed as we are not following standar directory structure of setuptools
 [tool.setuptools.packages.find]
