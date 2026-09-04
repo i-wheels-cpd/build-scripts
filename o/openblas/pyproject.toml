@@ -14,6 +14,9 @@ name = "openblas"
 version = "{PACKAGE_VERSION}"
 # One line description
 description = "OpenBLAS: An optimized BLAS library"
+
+maintainers = [ { name = "Open-CE" } ]
+
 # Classifiers to improve package discoverability
 classifiers = [
   "Development Status :: 5 - Production/Stable",
