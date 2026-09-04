@@ -35,8 +35,6 @@ export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-15/root/usr/lib64:$LD_LIBRARY_PATH
 
 export CC=gcc
 export CXX=g++
-export CMAKE_C_COMPILER=gcc
-export CMAKE_CXX_COMPILER=g++
 
 # -----------------------------------------------------------------------------
 # Clone and install OpenBLAS from source
