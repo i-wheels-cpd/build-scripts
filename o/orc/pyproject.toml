@@ -27,7 +27,7 @@ classifiers = [
 #Project URLs
 [project.urls]
 homepage = "http://github.com/apache/orc"
-upstream = "https://github.com/apache/orc/tree/v2.0.3"
+upstream = "https://github.com/apache/orc/tree/v2.0.7"
 
 #Find packages files in local folder, this is needed as we are not following standar directory structure of setuptools
 [tool.setuptools.packages.find]
