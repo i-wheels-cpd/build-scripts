@@ -1,0 +1,34 @@
+# Minimum requirements for the build system to execute.
+requires = [
+    "wheel",
+    "setuptools",
+]
+
+# Set build backend to setuptools
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openmpi"
+version = "5.0.6"
+description = "An open source Message Passing Interface implementation."
+maintainers = [ { name = "Open-CE" } ]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: C, C++",
+  "License :: Apache License 2.0",
+]
+
+[project.urls]
+homepage = "https://www.open-mpi.org/"
+upstream = "https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.6.tar.gz"
+
+# Find packages under local/ — maps local/openmpi/ → openmpi package in wheel
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["local"]
+
+[tool.setuptools.package-data]
+openmpi = ["bin/*", "lib/**/*", "include/**/*", "share/**/*", "etc/*"]
+
+[tool.distutils.bdist_wheel]
+plat-name = "linux_x86_64"  # Explicitly set the platform tag
