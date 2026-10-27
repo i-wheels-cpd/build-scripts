@@ -21,6 +21,7 @@ set -ex
 
 PACKAGE_NAME=opencv-python-headless
 PACKAGE_VERSION=${1:-93}
+BUILD_TYPE=${2:-cpu}     # cpu | cuda
 PACKAGE_URL=https://github.com/opencv/opencv-python
 GIT_TAG="${PACKAGE_VERSION##*.}"
 PACKAGE_DIR="opencv-python"
@@ -87,7 +88,7 @@ cd ..
 wget https://raw.githubusercontent.com/i-wheels-cpd/build-scripts/refs/heads/main/l/libprotobuf/pyproject.toml
 sed -i "s/{PACKAGE_VERSION}/$PACKAGE_VERSION/g" pyproject.toml
 
-python3.14 -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
+#python3.14 -m pip wheel -w $WORK_DIR -vv --no-build-isolation --no-deps .
 
 echo " protobuf installed success at end $PWD"
 
@@ -143,37 +144,37 @@ git submodule update --init --recursive
 
 CMAKE_CUDA_ARGS=""
 
-if [[ "${BUILD_TYPE}" == "cuda" ]]; then
-
-    export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
+if [ "$BUILD_TYPE" = "cuda" ]; then
+    export CUDA_HOME="/usr/local/cuda-13.3"
     export PATH="${CUDA_HOME}/bin:${PATH}"
 
     CUDA_LIB="${CUDA_HOME}/targets/x86_64-linux/lib"
-    CUDA_STUB_LIB="${CUDA_LIB}/stubs"
-
-    # Build-time CUDA driver stub.
-    # No NVIDIA driver is required for compilation.
-    CUDA_CUDA_LIBRARY="${CUDA_STUB_LIB}/libcuda.so"
-
-    echo "Using CUDA build-time stub:"
-    echo "  ${CUDA_CUDA_LIBRARY}"
+    export LIBRARY_PATH="/opt/nvidia-libs:${LIBRARY_PATH:-}"
+    export LD_LIBRARY_PATH="/opt/nvidia-libs:${CUDA_LIB}:${LD_LIBRARY_PATH:-}"
 
     CUDA_LEVELS="75;80;86;89;90"
+    echo "========== CUDA BUILD =========="
+    echo "CUDA_HOME=${CUDA_HOME}"
+    echo "CUDA_LIB=${CUDA_LIB}"
+    command -v nvcc
+    nvcc --version
 
     CMAKE_CUDA_ARGS="
-                     -DOPENCV_EXTRA_MODULES_PATH=${WORK_DIR}/${PACKAGE_DIR}/opencv_contrib/modules
-                     -DWITH_CUDA=ON
-                     -DWITH_CUBLAS=ON
-                     -DWITH_NVCUVID=OFF
-                     -DWITH_NVCUVENC=OFF
-                     -DENABLE_FAST_MATH=ON
-                     -DCUDA_FAST_MATH=ON
-                     -DCUDA_ARCH_BIN=${CUDA_LEVELS}
-                     -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_HOME}
-                     -DCUDA_cupti_LIBRARY=${CUDA_LIB}/libcupti.so
-                     -DCUDA_CUDA_LIBRARY=${CUDA_CUDA_LIBRARY}
-                    "
-    export LD_LIBRARY_PATH="${CUDA_LIB}:${LD_LIBRARY_PATH:-}"
+                   -DOPENCV_EXTRA_MODULES_PATH=${WORK_DIR}/${PACKAGE_DIR}/opencv_contrib/modules
+                   -DWITH_CUDA=ON
+                   -DWITH_CUBLAS=ON
+                   -DWITH_NVCUVID=OFF
+                   -DWITH_NVCUVENC=OFF
+                   -DBUILD_opencv_cudacodec=OFF
+                   -DENABLE_FAST_MATH=ON
+                   -DCUDA_FAST_MATH=ON
+                   -DCUDA_ARCH_BIN=${CUDA_LEVELS}
+                   -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_HOME}
+                   -DCUDA_SDK_ROOT_DIR=${CUDA_HOME}
+                   "
+else
+    echo "CPU build selected"
+    CMAKE_CUDA_ARGS=""
 fi
 
 # OpenCV configuration
